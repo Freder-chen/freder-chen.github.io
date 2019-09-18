@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Freder的博客</title>
+  
+  <subtitle>bibibi~bibi~bi~</subtitle>
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="https://freder-chen.github.io/"/>
+  <updated>2019-07-16T05:35:56.240Z</updated>
+  <id>https://freder-chen.github.io/</id>
+  
+  <author>
+    <name>Freder</name>
+    
+  </author>
+  
+  <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>从公司分红看股票价值</title>
+    <link href="https://freder-chen.github.io/2019/05/10/%E4%BB%8E%E5%85%AC%E5%8F%B8%E5%88%86%E7%BA%A2%E7%9C%8B%E8%82%A1%E7%A5%A8%E4%BB%B7%E5%80%BC/"/>
+    <id>https://freder-chen.github.io/2019/05/10/从公司分红看股票价值/</id>
+    <published>2019-05-09T16:00:00.000Z</published>
+    <updated>2019-07-16T05:35:56.240Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote><p>考研复习的日子总是平淡乏味的。在这样的日子里总想搞点事情，大新闻是搞不出来了，小新闻还是可以搞一搞～</p><p>从上学期以来对股票有些兴趣。看知乎大佬们都说股票应该长期持有，还有所谓的”国在钱在炒股法”。那么在假设永远不卖股票的情况下，股票分红是唯一的收益来源。所以这次从公司股票分红开始讨论股票价值。</p></blockquote><h3 id="数据获取"><a href="#数据获取" class="headerlink" title="数据获取"></a>数据获取</h3><p>本来我以为调一调库就完事儿了，没想到<code>tushare</code>的分红接口居然需要300积分，让我不得不自己写了个爬虫。这里使用了同花顺的数据：</p><pre><code class="python">import urllib.errorimport urllib.requestimport pandas as pdfrom bs4 import BeautifulSouphds=[    {&#39;User-Agent&#39;: &#39;Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6&#39;},] # 这个自己添加def get_dividend(code):    &#39;&#39;&#39;    code: 股票的6位数代码    &#39;&#39;&#39;    url = &#39;http://stockpage.10jqka.com.cn/{}/bonus/#bonuslist&#39;.format(code)    # 获取当前url资源    try:        request = urllib.request.Request(url, headers=np.random.choice(hds))        source_code = urllib.request.urlopen(request).read()        plain_text = str(source_code, &#39;utf-8&#39;)    except (urllib.error.HTTPError, urllib.error.URLError) as e:        print(e)        return None    # 提取bonus_table    soup = BeautifulSoup(plain_text, &quot;lxml&quot;)    bonus_table = soup.find(&#39;table&#39;, {&#39;id&#39;: &#39;bonus_table&#39;})    if bonus_table is None:        return None    table_header = bonus_table.find(&#39;thead&#39;)    table_body = bonus_table.find(&#39;tbody&#39;)    # 获取table的列名和数据内容    columns = [cname.get_text().split()[0] for cname in table_header.findAll(&#39;th&#39;)]    data = [      [coldata.get_text().split()[0] for coldata in coldata.findAll(&#39;td&#39;)] \      for coldata in table_body.findAll(&#39;tr&#39;)    ]    # 生成DataFrame    try:        df = pd.DataFrame(data, columns=columns)    except AssertionError as e:        print(code, e)        print(len(columns), columns)        for d in data:            print(len(d), d)        return None    return dfdividend_frame = get_dividend(&#39;000001&#39;)print(dividend_frame[[&#39;报告期&#39;, &#39;实施日期&#39;, &#39;分红方案说明&#39;, &#39;股息率&#39;]].head())</code></pre><p>运行结果大致如下：</p><pre><code class="shell">      报告期        实施日期        分红方案说明    股息率0  2018年报             --     10派1.45元(含税)     --1  2018中报             --         不分配不转增      --2  2017年报     2018-07-06     10派1.36元(含税)   1.57%3  2017中报             --         不分配不转增      --4  2016年报     2017-07-17     10派1.58元(含税)   1.46%</code></pre><p>现在有了获取某一公司历史分红的方法，还差获取深沪两市的所有股票代码的接口，比较幸运的是可以调库:)</p><pre><code class="python">import tushare as tsstock_code_list = ts.get_stock_basics().index.tolist()</code></pre><p>由此，我们就比较容易获取到深沪所有公司分红情况数据了：</p><pre><code class="python">import osimport numpy as npimport tushare as tspath = &#39;./data&#39;stock_code_list = ts.get_stock_basics().index.tolist()# confirm the path existsdividend_path = &#39;{}/dividend_data&#39;.format(path)if not os.path.exists(dividend_path):    os.makedirs(dividend_path)# save the dividend datafor i in stock_code_list:    time.sleep(np.random.rand() * 1) # 可根据情况调整时间间隔    dividend_frame = get_dividend(i)    if dividend_frame is not None:        dividend_frame.to_csv(&#39;{}/{}.csv&#39;.format(dividend_path, i), index=False)</code></pre><p>至此，基本数据全部获取并保存完毕。</p><h3 id="数据处理与分析"><a href="#数据处理与分析" class="headerlink" title="数据处理与分析"></a>数据处理与分析</h3><p>同花顺分红页面中有股息率指标，这帮我节省了很多工作。</p><blockquote><p>股息率：是股息与股票价格之间的比率。</p></blockquote><p>通过统计各公司17年年报股息率分布得到下图，不难看出很少有公司股息率超过3%。而从历年统计数据来看，我国平均通货膨胀率在8%左右，达到这个收益率的股票仅有四支——方大特钢(10.80%)、哈药股份(9.98%)、三钢闽光(9.15%)、华联控股(8.26%)。分析到这里已经可以下一个结论：股票的长期持有收益不在分红上。</p><div align="center"><br><img src="/assets/stock/17_股息率分布直方图.png" alt="17_股息率分布直方图"><br></div><blockquote><p>股票的价格是未来现金流的折现，未来现金流包括分红和将股票卖出的收入，但未来将股票卖出的价格又是来自于未来的未来的分红和未来的未来将股票卖出的收入，如此循环下去直到公司停业清算。</p></blockquote><p>上面引用可以用一句话总结：股票收入仅来自分红和股票卖出。又因股票长期持有收益不在分红上，那么可以得出结论：股票长期持有收益在股票卖出收入（也就是股票价格）上。</p><p>换一句话说，在一段时间内股票价格的年化增长率代表了股票的大部分价值。考虑到股票价格波动较大问题我们需要取一个相对平缓的时间段来测试。由下图对比选择了2016-11-14到2018-01-12这个时间段来计算股票价格的年化增长率。</p><div align="center"><br><img src="/assets/stock/上证指数分布.png" alt="上证指数分布"><br></div><p>现在我们并没有股票的历史数据，经过一番挣扎选择了之前使用过的<code>tushare</code>。调用很简单：</p><pre><code class="python">history_frame = ts.get_hist_data(stock_code)</code></pre><p>在剔除2016-11-14前未上市的公司以后，最后统计出的结果让人难过。沪市平均年化增长率为-19.3%，但的确存在股价翻倍的故事。统计得出你大概有3.3%的几率获得50%以上的收益，有12.2%的几率获得10%以上的收益，有17.4%的几率获得正收益。</p><div align="center"><br><img src="/assets/stock/growth_rate分布直方图.png" alt="growth_rate分布直方图"><br></div><p>个人暂且认为是A股劣质股票过多的缘故，故对股息率做排序后的如下结果：</p><pre><code class="shell"> 17_股息率  stock_number  growth_0  growth_0.1  growth_0.5  growth_mean0   0.000          2012  0.198807    0.140656    0.038767    -0.1707621   0.005          1406  0.231152    0.165718    0.044097    -0.1395852   0.010           938  0.253731    0.178038    0.046908    -0.1113103   0.015           621  0.286634    0.191626    0.045089    -0.1012294   0.020           431  0.306265    0.204176    0.041763    -0.0900635   0.025           288  0.368056    0.239583    0.045139    -0.0592576   0.030           200  0.420000    0.270000    0.050000    -0.0275977   0.035           136  0.404412    0.250000    0.044118    -0.0174468   0.040           105  0.457143    0.295238    0.057143     0.0181289   0.045            76  0.447368    0.302632    0.078947     0.03401910  0.050            48  0.500000    0.312500    0.104167     0.07847411  0.055            29  0.551724    0.413793    0.172414     0.15184312  0.060            14  0.571429    0.428571    0.285714     0.30502213  0.065            11  0.545455    0.363636    0.363636     0.35799914  0.070             9  0.555556    0.333333    0.333333     0.29760515  0.075             7  0.571429    0.428571    0.428571     0.397292</code></pre><p>股息率大于4%的股票平均年化增长率变为正。正收益可能性在45%左右，获得50%以上收益的可能性也从3.8%增加到了5.7%。这个结果很有意思，银行定期利率都在4%左右。有办法通过风险搏取更高的收益，股市才是合理的存在。</p><p>股息率大于0的股票年化增长率前6名：</p><pre><code class="shell">        code     name      pe  growth_rate  now_price  17_股息率0     300176   派生科技   21.26    2.877243      20.09   0.01491     601882   海天精工   43.15    2.079357       7.64   0.00522     002819   东方中科  132.19    1.976115      21.82   0.00143     000830   鲁西化工   15.22    1.901486      12.92   0.01544     600516   方大炭素    7.76    1.892578      19.10   0.06665     601155   新城控股    8.60    1.753220      38.26   0.0244</code></pre><p>股息率大于4%的股票年化增长率前6名：</p><pre><code class="shell">       code    name     pe  growth_rate  now_price 17_股息率0    600516  方大炭素   7.76    1.892578      19.10   0.06661    002110  三钢闽光   4.49    1.316097      17.07   0.09152    600507  方大特钢  10.94    1.055905      13.89   0.10803    000488  晨鸣纸业   6.99    0.730064       5.56   0.07624    601636  旗滨集团   9.59    0.694374       3.90   0.05565    600741  华域汽车   8.88    0.612395      22.09   0.04526    600019  宝钢股份  14.69    0.427593       6.87   0.0515</code></pre><h3 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h3><ul><li><a href="http://tushare.org/" target="_blank" rel="external">Tushare 官网</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;blockquote&gt;
+&lt;p&gt;考研复习的日子总是平淡乏味的。在这样的日子里总想搞点事情，大新闻是搞不出来了，小新闻还是可以搞一搞～&lt;/p&gt;
+&lt;p&gt;从上学期以来对股票有些兴趣。看知乎大佬们都说股票应该长期持有，还有所谓的”国在钱在炒股法”。那么在假设永远不卖股票的情况下，股票分红
+      
+    
+    </summary>
+    
+      <category term="Stock" scheme="https://freder-chen.github.io/categories/Stock/"/>
+    
+      <category term="Code" scheme="https://freder-chen.github.io/categories/Stock/Code/"/>
+    
+    
+      <category term="Stock" scheme="https://freder-chen.github.io/tags/Stock/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>如何开始一场数据分析比赛</title>
+    <link href="https://freder-chen.github.io/2018/10/29/%E5%A6%82%E4%BD%95%E5%BC%80%E5%A7%8B%E4%B8%80%E5%9C%BA%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E6%AF%94%E8%B5%9B/"/>
+    <id>https://freder-chen.github.io/2018/10/29/如何开始一场数据分析比赛/</id>
+    <published>2018-10-28T16:00:00.000Z</published>
+    <updated>2018-10-29T13:30:50.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>说来惭愧，这篇文章是比赛时就开始准备，拖到答辩后才完成。</p><p>写这篇文章的缘由是开始做<a href="http://www.dcjingsai.com/common/cmpt/2018%E7%A7%91%E5%A4%A7%E8%AE%AF%E9%A3%9EAI%E8%90%A5%E9%94%80%E7%AE%97%E6%B3%95%E5%A4%A7%E8%B5%9B_%E7%AB%9E%E8%B5%9B%E4%BF%A1%E6%81%AF.html" target="_blank" rel="external">2018科大讯飞AI营销算法大赛</a>， 被好友问到如何入门数据分析，由于我自己算是零基础边比赛边学，一时间不知道如何回答。毕竟“输的时候说什么都是错的”。最后取得第四名的成绩外出答辩受宠若惊，也给了我一点底气聊一聊自己的想法。同时，我必须强调这次比赛多亏了各位大佬的Baseline，否则不可能获得如此成绩。秉承继承分享精神的心情写下一点拙见。</p><p>由于我所属的队伍对于特征并无过多交流，以至于最后答辩的时候出现了不知道对方做了什么的尴尬情况。所以这里只能谈谈我自己的一点思路。大多观点借鉴这篇<a href="https://zhuanlan.zhihu.com/p/27033340" target="_blank" rel="external">转载文章</a>。</p><h3 id="开头的胡言乱语"><a href="#开头的胡言乱语" class="headerlink" title="开头的胡言乱语"></a>开头的胡言乱语</h3><p>我一直认为实战是最好的入门材料，数据分析亦如此。所以不要害怕面对比赛一行代码都敲不出来。一般情况下会有 baseline 作为参考，照着 baseline 一行一行敲，查每一个函数的意思、用法，慢慢的学会怎么使用数据分析工具。然后再去考虑研究每一个函数内部的原理。</p><h3 id="先让程序跑起来"><a href="#先让程序跑起来" class="headerlink" title="先让程序跑起来"></a>先让程序跑起来</h3><p>我们可以借鉴 <a href="https://zhuanlan.zhihu.com/p/44956113" target="_blank" rel="external">baseline</a> 中的模型，将所有应该导入的包装好以后以最快的速度跑出一个答案。</p><p>数据分析的一般步骤是读数据、填充缺失值、提取特征、模型的训练及预测。但要以最快的速度将模型跑起来就将所有 object 类型的特征 drop 掉。不要考虑提取特征。</p><p>我们可以通过 <code>dtypes</code> 查看一个DataFrame 里面的数据类型，通过 <code>isnull</code> 查看 DataFrame 里数据为空的情况。</p><pre><code class="python">import osimport pandas as pdtest = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;round1_iflyad_test_feature.txt&#39;), sep=&#39;\t&#39;)print(test.dtypes)NAs = test.isnull().sum()print(NAs[NAs &gt; 0])</code></pre><p>运行以后我们可以看到：</p><pre><code class="shell">instance_id                int64time                       int64...(太长省略)app_paid                    booladvert_name               objectdtype: objectuser_tags      13232make            4126...(太长省略)f_channel      36637app_id            31dtype: int64</code></pre><p>有这个结果我们就能知道哪些是我们应该删除的特征（比如 <code>advert_name</code>），哪些是我们应该填充的缺失值。现在就可以进行数据预处理：</p><pre><code class="python">import osimport pandas as pddef show_NaN(df):    NAs = df.isnull().sum()    print(NAs[NAs &gt; 0])def fill_missings(df):    df[&#39;make&#39;] = df[&#39;make&#39;].fillna(&#39;-1&#39;)    df[&#39;model&#39;] = df[&#39;model&#39;].fillna(&#39;-1&#39;)    df[&#39;osv&#39;] = df[&#39;osv&#39;].fillna(&#39;-1&#39;)    df[&#39;app_cate_id&#39;] = df[&#39;app_cate_id&#39;].fillna(-1)    df[&#39;app_id&#39;] = df[&#39;app_id&#39;].fillna(-1)    df[&#39;click&#39;] = df[&#39;click&#39;].fillna(-1)    df[&#39;user_tags&#39;] = df[&#39;user_tags&#39;].fillna(&#39;-1&#39;)    df[&#39;f_channel&#39;] = df[&#39;f_channel&#39;].fillna(&#39;-1&#39;)    return dfprint(&#39;Begin to read database...&#39;)train = pd.read_csv(os.path.join(&#39;Data&#39;,&#39;round1_iflyad_train.txt&#39;), sep=&#39;\t&#39;)test = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;round1_iflyad_test_feature.txt&#39;), sep=&#39;\t&#39;)all_data = pd.concat([train, test], sort=False)print(&#39;Begin to do pretreatment...&#39;)all_data = fill_missings(all_data)numeric_feats = all_data.dtypes[all_data.dtypes == &#39;object&#39;].indexall_data = all_data.drop(numeric_feats, axis=1)print(&#39;Begin to save database...&#39;)print(all_data.dtypes)print(all_data.shape)show_NaN(all_data)all_data[:train.shape[0]].to_csv(os.path.join(&#39;Data&#39;, &#39;train.csv&#39;), index=False)all_data[train.shape[0]:].to_csv(os.path.join(&#39;Data&#39;, &#39;test.csv&#39;), index=False)</code></pre><p><em>PS：我将所有数据文件放入了当前路径的 Data 文件夹中，你可以适应自己的文件路径。</em></p><p>选择模型这方面我也知之甚少，是以后应该重点补足的点。但开始一个比赛模型复制 <a href="https://zhuanlan.zhihu.com/p/44956113" target="_blank" rel="external">baseline</a> ，大方向不会错。</p><pre><code class="python">import osimport timeimport datetimeimport numpy as npimport pandas as pdimport warningswarnings.filterwarnings(&#39;ignore&#39;)def lgb_train(X_train, X_test, y):    import lightgbm as lgb    from sklearn.cross_validation import StratifiedKFold    X_loc_train = X_train.values    y_loc_train = y.values    X_loc_test = X_test.values    res = X_test.loc[:, [&#39;instance_id&#39;]]    model = lgb.LGBMClassifier(        boosting_type=&#39;gbdt&#39;, num_leaves=48, max_depth=-1, learning_rate=0.05,        n_estimators=2000, max_bin=425, subsample_for_bin=50000, objective=&#39;binary&#39;,        min_split_gain=0,min_child_weight=5, min_child_samples=10, subsample=0.8,        subsample_freq=1, colsample_bytree=1, reg_alpha=3, reg_lambda=5, seed=1000,         n_jobs=10, silent=True)    # 五折交叉训练，构造五个模型    baseloss = []    for i, (train_index, test_index) in enumerate(list( \        StratifiedKFold(y_loc_train, n_folds=5, shuffle=True, random_state=1024))):        print(&#39;---Fold&#39;, i)        lgb_model = model.fit(            X_loc_train[train_index], y_loc_train[train_index],            eval_names =[&#39;train&#39;, &#39;valid&#39;],            eval_metric=&#39;logloss&#39;,            eval_set=[                (X_loc_train[train_index], y_loc_train[train_index]),                (X_loc_train[test_index], y_loc_train[test_index])            ],            early_stopping_rounds=100        )        baseloss.append(lgb_model.best_score_[&#39;valid&#39;][&#39;binary_logloss&#39;])        res[&#39;prob_%s&#39; % str(i)] = lgb_model.predict_proba(            X_loc_test, num_iteration=lgb_model.best_iteration_)[:, 1]        print(&#39;mean:&#39;, res[&#39;prob_%s&#39; % str(i)].mean())    res[&#39;predicted_score&#39;] = res[[&#39;prob_&#39; + str(i) for i in range(5)]].mean(axis=1)    print(&#39;logloss:&#39;, baseloss, np.mean(baseloss))    print(&#39;mean:&#39;, res[&#39;predicted_score&#39;].mean())    now = datetime.datetime.now().strftime(&#39;%m-%d-%H-%M&#39;)    res[[&#39;instance_id&#39;, &#39;predicted_score&#39;]].to_csv(        os.path.join(&#39;Submit&#39;, &#39;lgb_%s.csv&#39; % now), index=False)print(&#39;Begin to read csv...&#39;)train = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;train.csv&#39;))test = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;test.csv&#39;))all_data = pd.concat([train, test], sort=False)print(&#39;Begin to plot database...&#39;)X_train = all_data[:train.shape[0]].drop([&#39;click&#39;], axis=1)X_test = all_data[train.shape[0]:].drop([&#39;click&#39;], axis=1)y = train[&#39;click&#39;]print(&#39;Begin to train...&#39;)lgb_train(X_train, X_test, y)</code></pre><p>至于什么是LightGB、什么是N折交叉训练，以后再去弄明白。这样算是能跑出一个结果了。</p><h3 id="提取特征"><a href="#提取特征" class="headerlink" title="提取特征"></a>提取特征</h3><p>在有一个能跑通的模型基础上，我肤浅的谈谈特征工程。</p><p>首先我们看看每个特征里面有多少类值：</p><pre><code class="python">df = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;round1_iflyad_train.txt&#39;), sep = &#39;\t&#39;)print(df.nunique().sort_values())</code></pre><pre><code class="shell">app_paid                       1creative_is_voicead            1...nnt                            6creative_height               13creative_width                20app_cate_id                   22advert_industry_inner         24advert_name                   34province                      35advert_id                     38creative_tp_dnf               40campaign_id                   64f_channel                     73osv                          300city                         333...instance_id              1001650dtype: int64</code></pre><p>像<code>creative_is_voicead</code>、<code>creative_is_js</code>类别为1的项就可以直接剔除掉；类似于<code>creative_has_deeplink</code>这样的二值特征直接使用问题不会太大；而<code>creative_width</code>这样的特征直接传入也是可以的。</p><p>仔细观察就会发现这些特征里面全是ID类离散特征。常理来说，ID类特征是不能直接导入模型的，这样的特征要么<a href="https://en.wikipedia.org/wiki/One-hot" target="_blank" rel="external">One-Hot</a>、要么对其进行排序。我的特征都是围绕这两项展开。One-Hot比较简单而且易于理解，代表着当前类别对Label的影响，这里不过多叙述。</p><p>重点说说对ID排序。排序是希望不规则的ID与Label呈线性关系(即ID越大点击率越高之类)，那么就这个问题来说广告点击率（CTR）是最为直接的排序方式。首先我们就可以对不同特征的CTR进行一些测验，比如考虑不同类型的广告点击率不同：</p><pre><code class="python">import matplotlib.pyplot as pltdf = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;round1_iflyad_train.txt&#39;), sep = &#39;\t&#39;)res = df.groupby([&#39;creative_type&#39;])[&#39;click&#39;].mean().reset_index(name=&#39;creative_type_ctr&#39;)print(res)x, y = &#39;creative_type&#39;, &#39;creative_type_ctr&#39;data = pd.concat([res[x], res[y]], axis=1)data.plot.scatter(x=x, y=y, ylim=(0, 1))plt.show()</code></pre><div align="center"><br><img src="/assets/xunfei/creative_type_ctr.png" alt="image-20181008152344990"><br></div><p>我们可以看到编号为类型2、3、5的广告点击率明显不如类型8、10的广告。那么我们可以这样写：</p><pre><code class="python">df = df.replace({    &quot;creative_type&quot; : {2 : 1, 5 : 2, 3 : 3, 10 : 4, 8 : 5},})</code></pre><p>这样广告类型和Label就正相关了。我们还可以猜测用户的网络状态（nnt）也与点击广告有关等等。</p><p>像这样简单的给ID排序会有一定的效果，但是可能仍不尽理想。因为不同的人会喜欢不同的广告类型，比如化妆品类广告可能点击率很高，但是如果推送给不化妆的人点击率会大大降低。也就是说同一类型的广告对不同的人来说点击率是不同的：</p><pre><code class="python">df = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;round1_iflyad_train.txt&#39;), sep = &#39;\t&#39;)df[&#39;creative_type_nnt&#39;] = df[&#39;creative_type&#39;].astype(&#39;str&#39;).str.cat(    df[&#39;nnt&#39;].astype(&#39;str&#39;), sep=&#39;_&#39;)df[&#39;creative_type_nnt&#39;] = df[&#39;creative_type_nnt&#39;].map(dict(    zip(df[&#39;creative_type_nnt&#39;].unique(), range(0, df[&#39;creative_type_nnt&#39;].nunique())))).astype(&#39;int32&#39;)res = df.groupby([&#39;creative_type_nnt&#39;])[&#39;click&#39;].mean().reset_index(    name=&#39;creative_type_nnt_ctr&#39;)print(res)x, y = &#39;creative_type_nnt&#39;, &#39;creative_type_nnt_ctr&#39;data = pd.concat([res[x], res[y]], axis=1)data.plot.scatter(x=x, y=y, ylim=(0, 1))plt.show()</code></pre><p>那么将<code>creative_type</code>和<code>nnt</code>拼接起来并重新编号ID（利于输出），得到下图：</p><div align="center"><br><img src="/assets/xunfei/creative_type_nnt1.png" alt="image-20181012222022389"><br></div><p>我们可以看到相比于之前的<code>creative_type</code>，现在每个ID的区分度更大，但是好像开始无法分辨<code>creative_type</code>之间的关系了。这是因为一维只能描述一种排序关系，要想实现特征拼接而尽量不丢失原始信息就应该使用One-Hot转化为多维来表示不同的<code>creative_type</code>，类似于下面实现：</p><pre><code class="python">df = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;round1_iflyad_train.txt&#39;), sep = &#39;\t&#39;)res = df.groupby([&#39;creative_type&#39;, &#39;nnt&#39;])[&#39;click&#39;].mean().reset_index(    name=&#39;creative_type_nnt_ctr&#39;)print(res)x, y = &#39;nnt&#39;, &#39;creative_type_nnt_ctr&#39;data = pd.concat([res[x], res[y]], axis=1)data.plot.scatter(x=x, y=y, ylim=(0, 1))plt.show()</code></pre><p>通过下图就可以看出在<code>creative_type</code>相同时，<code>nnt</code>不同CTR不同。这就可以表示不同<code>nnt</code>在同一<code>creative_type</code>下的偏好：</p><p><img src="/assets/xunfei/creative_type_nnt_ctr.png" alt="image-20181012220853867"></p><p>通过上图又出现了一个问题，就是在<code>creative_type</code>为10的时候有一个点的ctr值为1。我们查看这个点的实际信息可以看到：</p><pre><code class="shell">creative_type   nnt        ctr     count           10     2   1.000000         1</code></pre><p><code>creative_type=10 &amp; nnt=2</code>情况的点击率为1，但是只发生了1次。很明显这个点击率不可信，这时就要用到平滑处理，去尝试预测真实的点击率。</p><p>在一行数据在某一特征下出现次数可能很少（比如<code>model</code>），但是在另一些特征下出现次数会相对较多（如<code>nnt</code>）。我们说出现次数少的特征可信度低，出现次数多的特征可信度高。用可信度高的特征去预测可信度低的特征的点击率也许可行：</p><pre><code class="python">def get_ctr_matrix(data, src, dest):    temp = data.loc[data[&#39;label&#39;] != -1, [src, dest, &#39;label&#39;]]    src_gb = temp.groupby([src])    src_frame = src_gb.agg({&#39;label&#39;: &#39;sum&#39;}).rename(        columns={&#39;label&#39;: &#39;src_sum&#39;}).join(        src_gb.agg({&#39;label&#39;: &#39;count&#39;}).rename(        columns={&#39;label&#39;: &#39;src_count&#39;})).reset_index()    del src_gb    dest_gb = temp.groupby([src, dest])    dest_frame = dest_gb.agg({&#39;label&#39;: &#39;sum&#39;}).rename(        columns={&#39;label&#39;: &#39;dest_sum&#39;}).join(        dest_gb.agg({&#39;label&#39;: &#39;count&#39;}).rename(        columns={&#39;label&#39;: &#39;dest_count&#39;})).reset_index()    del dest_gb    frame = pd.merge(src_frame, dest_frame, on=[src], how=&#39;right&#39;)    del temp, src_frame, dest_frame    frame[&#39;rate&#39;] = (frame[&#39;src_sum&#39;] + frame[&#39;dest_sum&#39;]) / (frame[&#39;src_count&#39;] + frame[&#39;dest_count&#39;])    frame.drop([&#39;src_sum&#39;, &#39;src_count&#39;, &#39;dest_sum&#39;, &#39;dest_count&#39;], axis=1, inplace=True)    data = pd.merge(data, frame, on=[src, dest], how=&#39;left&#39;).fillna(0)    del frame    src_hot = pd.get_dummies(data[src], dtype=&#39;float32&#39;)    for h in src_hot.columns:        src_hot[h] *= data[&#39;rate&#39;]    data.drop([&#39;rate&#39;], axis=1, inplace=True)    return sparse.csr_matrix(src_hot[data[&#39;label&#39;] != -1], dtype=&#39;float32&#39;), sparse.csr_matrix(src_hot[data[&#39;label&#39;] == -1], dtype=&#39;float32&#39;)ctr_list = [    (&#39;creative_width&#39;, &#39;app_id&#39;),    (&#39;nnt&#39;, &#39;creative_id&#39;),]ctr_train_csr = sparse.csr_matrix((len(train_x), 0))ctr_predict_csr = sparse.csr_matrix((len(predict), 0))for (src, dest) in ctr_list:    ctr_t, ctr_p = get_ctr_matrix(data, src, dest)    ctr_train_csr = sparse.hstack((ctr_train_csr, ctr_t), &#39;csr&#39;, &#39;float32&#39;)    ctr_predict_csr = sparse.hstack((ctr_predict_csr, ctr_p), &#39;csr&#39;, &#39;float32&#39;)    print(src, dest, &#39;over&#39;)print(&#39;ctr feature prepared !&#39;)</code></pre><p>PS：本来由于维数过大，笔记本8G内存不够用，差点在这里弃赛。后来林有夕开源救我一命，用到了CSR。</p><p>在此之后出现了一个新的问题：若一个可信度高的类别转化率与可信度低的猜测转化率是相同的，可重要性应该不一样。当前特征没有体现这个区别。最后通过加入每个类别数量在全集中的占比来反映一个广告推送的置信度。解决了同一转化率下，不同类别可信度不同的问题。</p><p>最后，也是我没有完成的问题：如何解决针对用户点击率计算的多样化。当前投放特征主要集中在广告方和APP方，计算不同类人的偏好应该能优化这种情况。</p><h3 id="思考与总结"><a href="#思考与总结" class="headerlink" title="思考与总结"></a>思考与总结</h3><ol><li>无论是比赛过程中还是比赛结束后，深切体会到自己理论知识的缺乏。</li><li>离散特征做连续化是主要思路。</li><li>缺失值可以填充mean，填充新类别，也可以用其他特征预测。</li><li>Baseline有时候是个好东西，有时候会被骗。</li><li>肝真的能弥补一些东西，但不是全部。</li></ol><h3 id="有趣的链接"><a href="#有趣的链接" class="headerlink" title="有趣的链接"></a>有趣的链接</h3><ul><li><a href="http://www.dcjingsai.com/common/cmpt/2018%E7%A7%91%E5%A4%A7%E8%AE%AF%E9%A3%9EAI%E8%90%A5%E9%94%80%E7%AE%97%E6%B3%95%E5%A4%A7%E8%B5%9B_%E7%AB%9E%E8%B5%9B%E4%BF%A1%E6%81%AF.html" target="_blank" rel="external">2018科大讯飞AI营销算法大赛</a></li><li><a href="https://zhuanlan.zhihu.com/p/27033340" target="_blank" rel="external">转载文章</a></li><li><a href="https://zhuanlan.zhihu.com/p/44956113" target="_blank" rel="external">baseline</a></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;p&gt;说来惭愧，这篇文章是比赛时就开始准备，拖到答辩后才完成。&lt;/p&gt;
+&lt;p&gt;写这篇文章的缘由是开始做&lt;a href=&quot;http://www.dcjingsai.com/common/cmpt/2018%E7%A7%91%E5%A4%A7%E8%AE%AF%E9%A3%9EAI%
+      
+    
+    </summary>
+    
+      <category term="Code" scheme="https://freder-chen.github.io/categories/Code/"/>
+    
+    
+      <category term="Data Analysis" scheme="https://freder-chen.github.io/tags/Data-Analysis/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>碎碎念Ⅰ</title>
+    <link href="https://freder-chen.github.io/2018/06/09/%E7%A2%8E%E7%A2%8E%E5%BF%B5%E2%85%A0/"/>
+    <id>https://freder-chen.github.io/2018/06/09/碎碎念Ⅰ/</id>
+    <published>2018-06-08T16:00:00.000Z</published>
+    <updated>2018-06-09T00:50:18.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>一年又过去一半，总觉得自己还没什么长进。</p><p>这学期主要跟着《数据结构》这门课学习基本数据结构和基本算法。《数据结构》作业做得比较认真，但实际写 ACM 题目的时候就发现练习还是必须经历的过程，更不用说工程项目了。</p><p>至于胡思乱想。首先是音乐推荐系统这件事，考虑了几个月觉得可能要先放放。但我还是觉得当前的音乐平台业务逻辑做得比较杂乱，豆瓣FM是我知道的业务逻辑做得最好的一个，曲库却不够。再一个问题与我下一个想讨论的问题有关，我们如何用自己的技能养活自己。我觉得除了做付费服务目前还没有更好的方案。这也可能是当前音乐平台不够发达的原因之一。</p><p>最近大四都答辩完了，老的人要走新的人要来，物是人非之感很强烈。从 CFC 萌新变成 CFC 老油条，这个地方真的教了我很多东西。我们都不得不面对现实生活与社会，这种危机意识在 CFC 尤其强烈。我很清楚跟随大流走不会有所成就，尤其还会和大多数人比运气，我不相信自己的运气。所以我慢慢开始思考我的技能价值在哪里，真的就是程序员然后老板发工资吗？那这个程序员为什么是我而不是别人呢？我也开始思考，那些公司靠什么赚钱，这个模式是每一个个体与团体都要解决的问题，也是永远不会解决的问题。</p><p>最后就是团队。目前的 CFC 显得有些懒散，每个人的方向都不太一样，所以一般都各做各的事情。我很喜欢这种氛围，觉得可以任意发挥做出不一样的东西；当然我也意识到这是一个非常危险的氛围，成员稍有不慎就会挥霍四年，收获寥寥。</p><p>当前理解的 CFC 具有很强的继承感，却没有一个统一的途径来表达这份情感，而团队成员的表达能力也稍有欠缺。我们应该是技术至上、风格自由，却因此变成了懒散、分立的个体，这个问题始于上一个问题。</p><p>所以呢，其中的我也逃不出它的局限。</p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;p&gt;一年又过去一半，总觉得自己还没什么长进。&lt;/p&gt;
+&lt;p&gt;这学期主要跟着《数据结构》这门课学习基本数据结构和基本算法。《数据结构》作业做得比较认真，但实际写 ACM 题目的时候就发现练习还是必须经历的过程，更不用说工程项目了。&lt;/p&gt;
+&lt;p&gt;至于胡思乱想。首先是音乐推荐系统这
+      
+    
+    </summary>
+    
+      <category term="Life" scheme="https://freder-chen.github.io/categories/Life/"/>
+    
+    
+      <category term="碎碎念" scheme="https://freder-chen.github.io/tags/%E7%A2%8E%E7%A2%8E%E5%BF%B5/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>while(scanf())有什么错</title>
+    <link href="https://freder-chen.github.io/2018/03/29/while-scanf-%E6%9C%89%E4%BB%80%E4%B9%88%E9%94%99/"/>
+    <id>https://freder-chen.github.io/2018/03/29/while-scanf-有什么错/</id>
+    <published>2018-03-28T16:00:00.000Z</published>
+    <updated>2018-06-09T01:02:45.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>写算法题时，我常常偷懒写<code>while(scanf())</code>，这个问题让我浪费了很多时间。每次都是突然看到改成<code>while(scanf()!=EOF)</code>就AC。今天想起查查这两种写法有什么区别。</p><pre><code class="c">// scanf函数返回成功读入的数据项数，读入数据时遇到了“文件结束”则返回EOF。int scanf(const char *restrict format,...);// 而EOF定义在stdio.h中，值为-1。#define EOF (-1)</code></pre><p>有个疑惑是什么时候才算“文件结束”？</p><p>Linux中，在新的一行的开头，按下Ctrl-D，就代表EOF（如果在一行的中间按下Ctrl-D，则表示输出”标准输入”的缓存区，所以这时必须按两次Ctrl-D）；Windows中，Ctrl-Z表示EOF。</p><p>现在知道了<code>while(scanf()!=EOF)</code>为什么对，但是<code>while(scanf())</code>为什么错呢？也就是说<code>scanf()</code>在什么情况才会返回0？</p><p>只有在<code>scanf()</code>函数的第一个变量格式不正确时返回值才为0。</p><p>（完）</p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;p&gt;写算法题时，我常常偷懒写&lt;code&gt;while(scanf())&lt;/code&gt;，这个问题让我浪费了很多时间。每次都是突然看到改成&lt;code&gt;while(scanf()!=EOF)&lt;/code&gt;就AC。今天想起查查这两种写法有什么区别。&lt;/p&gt;
+&lt;pre&gt;&lt;code clas
+      
+    
+    </summary>
+    
+      <category term="Code" scheme="https://freder-chen.github.io/categories/Code/"/>
+    
+    
+      <category term="编程珠玑" scheme="https://freder-chen.github.io/tags/%E7%BC%96%E7%A8%8B%E7%8F%A0%E7%8E%91/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>如何用C语言写一个多行输入函数</title>
+    <link href="https://freder-chen.github.io/2018/03/10/%E5%A6%82%E4%BD%95%E7%94%A8C%E8%AF%AD%E8%A8%80%E5%86%99%E4%B8%80%E4%B8%AA%E5%A4%9A%E8%A1%8C%E8%BE%93%E5%85%A5%E5%87%BD%E6%95%B0/"/>
+    <id>https://freder-chen.github.io/2018/03/10/如何用C语言写一个多行输入函数/</id>
+    <published>2018-03-09T16:00:00.000Z</published>
+    <updated>2018-03-29T09:01:26.000Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote><p>从高中毕业就开始研究Editor，想写一个自己的文本编辑器。<br>大一时不了解其他东西就想用控制台写一个，留下了这么一个不完备的多行输入函数。</p></blockquote><h2 id="1-准备"><a href="#1-准备" class="headerlink" title="1. 准备"></a>1. 准备</h2><p>在尝试实现这个函数的过程中，我试过<code>printf()</code>系列，也试过<code>getchar()</code>系列，还有<code>getch()</code>系列……后来发现回车入栈函数并不能满足多行文本输入的需求，最后找到了<code>_getch()</code>与<code>_putch()</code>。由于<code>char</code>类型不能容纳中文（2个字节），选择了<code>wchar_t</code>作为储存字符的类型，与之相匹配的函数是<code>void _putwch(wchar_t c)</code>与<code>wchar_t _getwch()</code>。</p><p>现在可以很容易实现输入一个字符并输出：</p><pre><code class="c">wchar_t ch = _getwch();_putwch(ch);</code></pre><h2 id="2-架构"><a href="#2-架构" class="headerlink" title="2. 架构"></a>2. 架构</h2><h3 id="2-1-基本数据结构"><a href="#2-1-基本数据结构" class="headerlink" title="2.1. 基本数据结构"></a>2.1. 基本数据结构</h3><ul><li><p>Edit box config</p><pre><code class="c">struct EditBoxConfig {    char *filename;    short cursor_x, cursor_y;    short screen_rows, screen_cols;    struct Word *head_word;    // Head_word has no characters(WEOF) which follows by the text.};</code></pre></li><li><p>Word</p><p>我使用了双向链表来储存输入字符，但也可以尝试<code>char *</code>这样的数组配合<code>malloc</code>和<code>realloc</code>来写，理论上是更好的选择。</p><pre><code class="c">struct Word {    wchar_t ch;    struct Word *last;    struct Word *next;};</code></pre></li></ul><h3 id="2-2-输入"><a href="#2-2-输入" class="headerlink" title="2.2. 输入"></a>2.2. 输入</h3><ul><li><p>输入函数需要正确处理输入的内容：</p><pre><code class="c">wchar_t ch;switch (ch = _getwch()) {    // You can find the number of these characters on the Internet.    case ARROW_KEY:        move_pointer(_getwch());        break;    case BACKSPACE:        delete_word();        break;    case ...:        /* You can do what you want.*/        break;     default: /* Word and enter. */        insert_word(ch);        break;}</code></pre></li></ul><ul><li>在输入过程中需要定义一个<code>present_word</code>在储存当前指向的字符。我们可以将它看作虚拟光标。</li></ul><h3 id="2-3-输出"><a href="#2-3-输出" class="headerlink" title="2.3. 输出"></a>2.3. 输出</h3><ul><li><p>输出需要在正确的位置渲染出字符：</p><pre><code class="c">// This is print word head.// If the text is beyond the screen, // it will not be the head of text.struct Word *word = word_head;// Print line by line.for (i = 0; i &lt; editor.screen_rows - 1; i++) {    // If current Word is a word, print it on screen.    // Else if current Word is newline character, print space after this position.    print_word_and_update_cursor();}move_cursor_to(editor.cursor_x, editor.cursor_y);</code></pre></li></ul><h3 id="2-4-输入、输出函数联系"><a href="#2-4-输入、输出函数联系" class="headerlink" title="2.4. 输入、输出函数联系"></a>2.4. 输入、输出函数联系</h3><ul><li><pre><code class="c">while (1) {    refresh_screen();    process_keypress();}</code></pre></li></ul><h2 id="3-想说的话-吐槽-。"><a href="#3-想说的话-吐槽-。" class="headerlink" title="3. 想说的话(吐槽=。="></a>3. 想说的话<del>(吐槽</del>=。=</h2><p>从开始这个项目到现在很久很久了，最主要的问题是我很少找到可以借鉴的资料，导致战线超级长。这也从另一方面反映这东西的奇葩(=。=)</p><p>从一开始的想写一个自己的文本编辑器，到和编辑框杠上，有很多可以回忆的往事。所以虽然这东西简单，但我很想记录下来，它对我来说是非常重要的回忆。记得几次寒假一两周不出门，每天十几小时花在上面都是辛酸泪。</p><p>另外，我的Demo还有很多功能没有实现。比如：翻页、一些常用键功能……短期内不会再弄这东西了。</p><h2 id="4-参考资料"><a href="#4-参考资料" class="headerlink" title="4. 参考资料"></a>4. 参考资料</h2><ol><li><a href="https://github.com/Freder-chen/edit_box" target="_blank" rel="external">My demo in github</a></li><li><a href="http://antirez.com/news/108" target="_blank" rel="external">Kilo</a></li><li><a href="https://viewsourcecode.org/snaptoken/kilo/" target="_blank" rel="external">Kilo解析</a></li></ol>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;blockquote&gt;
+&lt;p&gt;从高中毕业就开始研究Editor，想写一个自己的文本编辑器。&lt;br&gt;大一时不了解其他东西就想用控制台写一个，留下了这么一个不完备的多行输入函数。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&quot;1-准备&quot;&gt;&lt;a href=&quot;#1-准备&quot; cla
+      
+    
+    </summary>
+    
+      <category term="Code" scheme="https://freder-chen.github.io/categories/Code/"/>
+    
+    
+      <category term="Gizmos" scheme="https://freder-chen.github.io/tags/Gizmos/"/>
+    
+  </entry>
+  
+</feed>

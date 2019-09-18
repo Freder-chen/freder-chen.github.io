@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+	<script type="text/javascript" async
+		src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
+	</script>
+  </head>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+  
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/css/mobi.css-3.1.1/dist/mobi.min.css">
+<link rel="stylesheet" href="/css/caomei1.2.1/style.css">
+<link rel="stylesheet" href="/css/theme.css">
+
+  
+    <meta name="keywords" content="Stock" />
+  
+
+  
+    <link rel="alternate" href="/atom.xml" title="Freder的博客" type="application/atom+xml" />
+  
+
+  
+    <link rel="shortcut icon" href="/favicon.jpg">
+  
+
+  <title>从公司分红看股票价值 - Freder的博客</title>
+</head>
+
+  <body class="theme-body">
+    <div class="flex-center theme-header-wrapper">
+  <div class="container flex-left units-gap theme-header-container">
+    <a href="/" class="unit-0 theme-header-icon theme-icon-link" title="首页">
+      <i class="czs-home-l"></i>
+    </a>
+    <div class="flex-center text-center flex-middle unit theme-header-title theme-header-title-no-transition">
+      Freder的博客
+    </div>
+    <a class="unit-0 theme-header-icon theme-icon-link theme-header-sidebar-icon" href="javascript:void(0);" title="更多">
+      <i class="czs-menu-l"></i>
+    </a>
+  </div>
+</div>
+<div class="theme-header-placeholder"></div>
+
+    <div class="flex-center">
+      <div class="container">
+        <article>
+  <h1 class="text-center">
+    从公司分红看股票价值
+  </h1>
+  <div class="text-center top-gap">
+    <div class="text-small text-muted">
+  <time datetime="2019-05-10T00:00:00+08:00">
+    2019-05-10
+  </time>
+  <span class="theme-separator">·</span>
+  <i class="czs-user-l"></i>
+  <a class="text-muted theme-text-no-decoration" href="https://github.com/Freder">Freder</a>
+  <span class="theme-separator">·</span>
+  <i class="czs-bookmark-l"></i>
+  <a class="text-muted theme-text-no-decoration" href="/categories/Stock/">Stock</a> > <a class="text-muted theme-text-no-decoration" href="/categories/Stock/Code/">Code</a>
+  <span class="theme-comment-count-container theme-hide theme-comment-count-container-transparent">
+    <span class="theme-separator">·</span>
+    <i class="czs-comment-l"></i>
+    <a class="text-muted theme-text-no-decoration theme-comment-count" data-disqus-identifier="2019/05/10/从公司分红看股票价值/" href="/2019/05/10/从公司分红看股票价值/#disqus_thread"></a>
+  </span>
+</div>
+
+  </div>
+  <div class="top-gap-big">
+    <blockquote>
+<p>考研复习的日子总是平淡乏味的。在这样的日子里总想搞点事情，大新闻是搞不出来了，小新闻还是可以搞一搞～</p>
+<p>从上学期以来对股票有些兴趣。看知乎大佬们都说股票应该长期持有，还有所谓的”国在钱在炒股法”。那么在假设永远不卖股票的情况下，股票分红是唯一的收益来源。所以这次从公司股票分红开始讨论股票价值。</p>
+</blockquote>
+<h3 id="数据获取"><a href="#数据获取" class="headerlink" title="数据获取"></a>数据获取</h3><p>本来我以为调一调库就完事儿了，没想到<code>tushare</code>的分红接口居然需要300积分，让我不得不自己写了个爬虫。这里使用了同花顺的数据：</p>
+<pre><code class="python">import urllib.error
+import urllib.request
+import pandas as pd
+from bs4 import BeautifulSoup
+
+hds=[
+    {&#39;User-Agent&#39;: &#39;Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6&#39;},
+] # 这个自己添加
+
+def get_dividend(code):
+    &#39;&#39;&#39;
+    code: 股票的6位数代码
+    &#39;&#39;&#39;
+    url = &#39;http://stockpage.10jqka.com.cn/{}/bonus/#bonuslist&#39;.format(code)
+
+    # 获取当前url资源
+    try:
+        request = urllib.request.Request(url, headers=np.random.choice(hds))
+        source_code = urllib.request.urlopen(request).read()
+        plain_text = str(source_code, &#39;utf-8&#39;)
+    except (urllib.error.HTTPError, urllib.error.URLError) as e:
+        print(e)
+        return None
+
+    # 提取bonus_table
+    soup = BeautifulSoup(plain_text, &quot;lxml&quot;)
+    bonus_table = soup.find(&#39;table&#39;, {&#39;id&#39;: &#39;bonus_table&#39;})
+    if bonus_table is None:
+        return None
+
+    table_header = bonus_table.find(&#39;thead&#39;)
+    table_body = bonus_table.find(&#39;tbody&#39;)
+
+    # 获取table的列名和数据内容
+    columns = [cname.get_text().split()[0] for cname in table_header.findAll(&#39;th&#39;)]
+    data = [
+      [coldata.get_text().split()[0] for coldata in coldata.findAll(&#39;td&#39;)] \
+      for coldata in table_body.findAll(&#39;tr&#39;)
+    ]
+
+    # 生成DataFrame
+    try:
+        df = pd.DataFrame(data, columns=columns)
+    except AssertionError as e:
+        print(code, e)
+        print(len(columns), columns)
+        for d in data:
+            print(len(d), d)
+        return None
+
+    return df
+
+
+dividend_frame = get_dividend(&#39;000001&#39;)
+print(dividend_frame[[&#39;报告期&#39;, &#39;实施日期&#39;, &#39;分红方案说明&#39;, &#39;股息率&#39;]].head())
+</code></pre>
+<p>运行结果大致如下：</p>
+<pre><code class="shell">      报告期        实施日期        分红方案说明    股息率
+0  2018年报             --     10派1.45元(含税)     --
+1  2018中报             --         不分配不转增      --
+2  2017年报     2018-07-06     10派1.36元(含税)   1.57%
+3  2017中报             --         不分配不转增      --
+4  2016年报     2017-07-17     10派1.58元(含税)   1.46%
+</code></pre>
+<p>现在有了获取某一公司历史分红的方法，还差获取深沪两市的所有股票代码的接口，比较幸运的是可以调库:)</p>
+<pre><code class="python">import tushare as ts
+stock_code_list = ts.get_stock_basics().index.tolist()
+</code></pre>
+<p>由此，我们就比较容易获取到深沪所有公司分红情况数据了：</p>
+<pre><code class="python">import os
+import numpy as np
+import tushare as ts
+
+path = &#39;./data&#39;
+stock_code_list = ts.get_stock_basics().index.tolist()
+
+# confirm the path exists
+dividend_path = &#39;{}/dividend_data&#39;.format(path)
+if not os.path.exists(dividend_path):
+    os.makedirs(dividend_path)
+
+# save the dividend data
+for i in stock_code_list:
+    time.sleep(np.random.rand() * 1) # 可根据情况调整时间间隔
+    dividend_frame = get_dividend(i)
+    if dividend_frame is not None:
+        dividend_frame.to_csv(&#39;{}/{}.csv&#39;.format(dividend_path, i), index=False)
+</code></pre>
+<p>至此，基本数据全部获取并保存完毕。</p>
+<h3 id="数据处理与分析"><a href="#数据处理与分析" class="headerlink" title="数据处理与分析"></a>数据处理与分析</h3><p>同花顺分红页面中有股息率指标，这帮我节省了很多工作。</p>
+<blockquote>
+<p>股息率：是股息与股票价格之间的比率。</p>
+</blockquote>
+<p>通过统计各公司17年年报股息率分布得到下图，不难看出很少有公司股息率超过3%。而从历年统计数据来看，我国平均通货膨胀率在8%左右，达到这个收益率的股票仅有四支——方大特钢(10.80%)、哈药股份(9.98%)、三钢闽光(9.15%)、华联控股(8.26%)。分析到这里已经可以下一个结论：股票的长期持有收益不在分红上。</p>
+<div align="center"><br><img src="/assets/stock/17_股息率分布直方图.png" alt="17_股息率分布直方图"><br></div>
+
+<blockquote>
+<p>股票的价格是未来现金流的折现，未来现金流包括分红和将股票卖出的收入，但未来将股票卖出的价格又是来自于未来的未来的分红和未来的未来将股票卖出的收入，如此循环下去直到公司停业清算。</p>
+</blockquote>
+<p>上面引用可以用一句话总结：股票收入仅来自分红和股票卖出。又因股票长期持有收益不在分红上，那么可以得出结论：股票长期持有收益在股票卖出收入（也就是股票价格）上。</p>
+<p>换一句话说，在一段时间内股票价格的年化增长率代表了股票的大部分价值。考虑到股票价格波动较大问题我们需要取一个相对平缓的时间段来测试。由下图对比选择了2016-11-14到2018-01-12这个时间段来计算股票价格的年化增长率。</p>
+<div align="center"><br><img src="/assets/stock/上证指数分布.png" alt="上证指数分布"><br></div>
+
+<p>现在我们并没有股票的历史数据，经过一番挣扎选择了之前使用过的<code>tushare</code>。调用很简单：</p>
+<pre><code class="python">history_frame = ts.get_hist_data(stock_code)
+</code></pre>
+<p>在剔除2016-11-14前未上市的公司以后，最后统计出的结果让人难过。沪市平均年化增长率为-19.3%，但的确存在股价翻倍的故事。统计得出你大概有3.3%的几率获得50%以上的收益，有12.2%的几率获得10%以上的收益，有17.4%的几率获得正收益。</p>
+<div align="center"><br><img src="/assets/stock/growth_rate分布直方图.png" alt="growth_rate分布直方图"><br></div>
+
+<p>个人暂且认为是A股劣质股票过多的缘故，故对股息率做排序后的如下结果：</p>
+<pre><code class="shell"> 17_股息率  stock_number  growth_0  growth_0.1  growth_0.5  growth_mean
+0   0.000          2012  0.198807    0.140656    0.038767    -0.170762
+1   0.005          1406  0.231152    0.165718    0.044097    -0.139585
+2   0.010           938  0.253731    0.178038    0.046908    -0.111310
+3   0.015           621  0.286634    0.191626    0.045089    -0.101229
+4   0.020           431  0.306265    0.204176    0.041763    -0.090063
+5   0.025           288  0.368056    0.239583    0.045139    -0.059257
+6   0.030           200  0.420000    0.270000    0.050000    -0.027597
+7   0.035           136  0.404412    0.250000    0.044118    -0.017446
+8   0.040           105  0.457143    0.295238    0.057143     0.018128
+9   0.045            76  0.447368    0.302632    0.078947     0.034019
+10  0.050            48  0.500000    0.312500    0.104167     0.078474
+11  0.055            29  0.551724    0.413793    0.172414     0.151843
+12  0.060            14  0.571429    0.428571    0.285714     0.305022
+13  0.065            11  0.545455    0.363636    0.363636     0.357999
+14  0.070             9  0.555556    0.333333    0.333333     0.297605
+15  0.075             7  0.571429    0.428571    0.428571     0.397292
+</code></pre>
+<p>股息率大于4%的股票平均年化增长率变为正。正收益可能性在45%左右，获得50%以上收益的可能性也从3.8%增加到了5.7%。这个结果很有意思，银行定期利率都在4%左右。有办法通过风险搏取更高的收益，股市才是合理的存在。</p>
+<p>股息率大于0的股票年化增长率前6名：</p>
+<pre><code class="shell">        code     name      pe  growth_rate  now_price  17_股息率
+0     300176   派生科技   21.26    2.877243      20.09   0.0149
+1     601882   海天精工   43.15    2.079357       7.64   0.0052
+2     002819   东方中科  132.19    1.976115      21.82   0.0014
+3     000830   鲁西化工   15.22    1.901486      12.92   0.0154
+4     600516   方大炭素    7.76    1.892578      19.10   0.0666
+5     601155   新城控股    8.60    1.753220      38.26   0.0244
+</code></pre>
+<p>股息率大于4%的股票年化增长率前6名：</p>
+<pre><code class="shell">       code    name     pe  growth_rate  now_price 17_股息率
+0    600516  方大炭素   7.76    1.892578      19.10   0.0666
+1    002110  三钢闽光   4.49    1.316097      17.07   0.0915
+2    600507  方大特钢  10.94    1.055905      13.89   0.1080
+3    000488  晨鸣纸业   6.99    0.730064       5.56   0.0762
+4    601636  旗滨集团   9.59    0.694374       3.90   0.0556
+5    600741  华域汽车   8.88    0.612395      22.09   0.0452
+6    600019  宝钢股份  14.69    0.427593       6.87   0.0515
+</code></pre>
+<h3 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h3><ul>
+<li><a href="http://tushare.org/" target="_blank" rel="external">Tushare 官网</a></li>
+</ul>
+
+  </div>
+</article>
+<blockquote class="top-gap-big"> <p> 本文遵循 <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh" class"text-muted">CC BY-ND-ND 3.0</a> 协议，转载请注明原作者，禁止商用，禁止演绎。 </p> </blockquote>
+<div class="top-gap-big text-center text-muted">
+  <small>
+    <i class="czs-tag-l"></i>
+    <a class="text-muted" href="/tags/Stock/">Stock</a>
+  </small>
+</div>
+
+
+  <div id="disqus_thread" class="top-gap-big"></div>
+  <script>
+    var langMap = {
+      en: 'en',
+      'zh-CN': 'zh'
+    };
+    var disqus_config = function () {
+      this.language = langMap['zh-CN'] || langMap['en'];
+      this.page.url = 'https://freder-chen.github.io/2019/05/10/从公司分红看股票价值/';
+      this.page.identifier = '2019/05/10/从公司分红看股票价值/';
+      this.page.title = '从公司分红看股票价值';
+    };
+    (function() {
+      var d = document, s = d.createElement('script');
+      s.src = '//Freder.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+        <hr class="top-gap-big"></hr>
+<p class="text-center">
+  <small class="text-muted">
+    &copy;
+    
+      2017 -
+    
+    <span itemprop="copyrightYear">2019</span>
+    <i class="czs-heart" style="color:red;"></i>
+    <span itemprop="copyrightHolder">Freder</span>
+
+    <br/>
+
+    由 <a class="text-muted" href="https://hexo.io" title="Hexo">Hexo</a> 强力驱动
+    <span class="theme-separator">·</span>
+    主题
+    <a class="text-muted" href="https://github.com/xcatliu/hexo-theme-milk">Milk</a>
+  </small>
+</p>
+
+      </div>
+      <div class="theme-sidebar-mask theme-hide"></div>
+<aside class="theme-sidebar-wrapper">
+  <div class="container flex-left units-gap theme-header-container">
+    
+    <a class="unit-0 theme-icon-link" href="/archives" title="归档">
+      <i class="czs-folder-l"></i>
+    </a>
+  
+    <a class="unit-0 theme-icon-link" href="/categories" title="分类">
+      <i class="czs-bookmark-l"></i>
+    </a>
+  
+    <a class="unit-0 theme-icon-link" href="/tags" title="标签">
+      <i class="czs-tag-l"></i>
+    </a>
+  
+    <div class="unit"></div>
+  
+    <a class="unit-0 theme-icon-link" href="https://freder-chen.github.io" title="关于我">
+      <i class="czs-user-l"></i>
+    </a>
+  
+
+  </div>
+  <div class="container">
+    
+          <h2>Freder的博客</h2>
+          
+          <p class="top-gap-0 text-muted">bibibi~bibi~bi~</p>
+          
+          <div class="flex-left flex-middle top-gap">
+            <img alt="Avatar" height="24" src="/assets/about/freder.jpg"/>
+            <span class="theme-sidebar-author">Freder</span>
+          </div>
+          
+          <p>Welcome to there!</p>
+          
+          <p class="theme-sidebar-social">
+            
+    <a class="unit-0 theme-icon-link" href="https://github.com/freder-chen" title="GitHub">
+      <i class="czs-github"></i>
+    </a>
+  
+    <a class="unit-0 theme-icon-link" href="/atom.xml" title="RSS 订阅">
+      <i class="czs-rss"></i>
+    </a>
+  
+
+          </p>
+          
+          <h5>友情链接</h5>
+          <p class="text-muted">
+            <small>
+              <ul class="theme-list-style-none">
+                <li><a class="text-muted" href="https://blog.crazyforcode.org/">CFC Studio</a></li><li><a class="text-muted" href="https://blog.windisco.com/">执一 こころ 🍥</a></li><li><a class="text-muted" href="/links">More</a></li>
+              </ul>
+            </small>
+          </p>
+          
+  </div>
+</aside>
+
+    </div>
+	
+    <script src="/js/theme.js"></script>
+    
+
+    
+  <script id="dsq-count-scr" src="//Freder.disqus.com/count.js" async></script>
+
+  </body>
+</html>

@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+	<script type="text/javascript" async
+		src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
+	</script>
+  </head>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+  
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/css/mobi.css-3.1.1/dist/mobi.min.css">
+<link rel="stylesheet" href="/css/caomei1.2.1/style.css">
+<link rel="stylesheet" href="/css/theme.css">
+
+  
+    <meta name="keywords" content="编程珠玑" />
+  
+
+  
+    <link rel="alternate" href="/atom.xml" title="Freder的博客" type="application/atom+xml" />
+  
+
+  
+    <link rel="shortcut icon" href="/favicon.jpg">
+  
+
+  <title>3个旋转向量算法的比较 - Freder的博客</title>
+</head>
+
+  <body class="theme-body">
+    <div class="flex-center theme-header-wrapper">
+  <div class="container flex-left units-gap theme-header-container">
+    <a href="/" class="unit-0 theme-header-icon theme-icon-link" title="首页">
+      <i class="czs-home-l"></i>
+    </a>
+    <div class="flex-center text-center flex-middle unit theme-header-title theme-header-title-no-transition">
+      Freder的博客
+    </div>
+    <a class="unit-0 theme-header-icon theme-icon-link theme-header-sidebar-icon" href="javascript:void(0);" title="更多">
+      <i class="czs-menu-l"></i>
+    </a>
+  </div>
+</div>
+<div class="theme-header-placeholder"></div>
+
+    <div class="flex-center">
+      <div class="container">
+        <article>
+  <h1 class="text-center">
+    3个旋转向量算法的比较
+  </h1>
+  <div class="text-center top-gap">
+    <div class="text-small text-muted">
+  <time datetime="2017-12-03T00:00:00+08:00">
+    2017-12-03
+  </time>
+  <span class="theme-separator">·</span>
+  <i class="czs-user-l"></i>
+  <a class="text-muted theme-text-no-decoration" href="https://github.com/Freder">Freder</a>
+  <span class="theme-separator">·</span>
+  <i class="czs-bookmark-l"></i>
+  <a class="text-muted theme-text-no-decoration" href="/categories/Code/">Code</a>
+  <span class="theme-comment-count-container theme-hide theme-comment-count-container-transparent">
+    <span class="theme-separator">·</span>
+    <i class="czs-comment-l"></i>
+    <a class="text-muted theme-text-no-decoration theme-comment-count" data-disqus-identifier="2017/12/03/3个旋转向量算法的比较/" href="/2017/12/03/3个旋转向量算法的比较/#disqus_thread"></a>
+  </span>
+</div>
+
+  </div>
+  <div class="top-gap-big">
+    <h2 id="1-旋转算法"><a href="#1-旋转算法" class="headerlink" title="1. 旋转算法"></a>1. 旋转算法</h2><p>《CSAPP》看到《存储器层次结构》的时候，突然醒悟暑假时看《编程珠玑》的一个疑惑。题目是这样的：</p>
+<blockquote>
+<p>写出算法将一个n元一维向量左旋转i个位置。<br>例如，当n=8且i=3时，向量abcdefgh旋转为defghabc。</p>
+</blockquote>
+<p>《编程珠玑》上给出了5种算法(我就不逐一说明了)，下面是这里要讨论的3种：</p>
+<ol>
+<li><p>杂技算法</p>
+<p>移动x[0]到临时变量t，然后移动x[i]至x[0]，x[2i]至x[i]（x的下标对n取模），以此类推，直至返回到取x[0]中的元素，此时改为从t中取值并终止程序。若该过程没有移动全部元素，就从x[1]开始再次移动，直到所有元素都已经移动为止。示意图如下：</p>
+<div align="center"><br><img src="/assets/2/杂技算法.png" alt="杂技算法"><br></div>
+</li>
+<li><p>块交换算法</p>
+<p>旋转向量<code>x</code>是交换向量<code>ab</code>的两段，得到向量<code>ba</code>（这里<code>a</code>代表<code>x</code>中的前i个元素）。假设<code>a</code>比<code>b</code>短，将<code>b</code>分为<code>b1</code>和<code>b2</code>，使得<code>b2</code>具有与<code>a</code>相同的长度。交换<code>a</code>和<code>b2</code>，也就将<code>ab1b2</code>转换为<code>b2b1a</code>。序列<code>a</code>此时已处于其最终的位置，因此问题转换为交换<code>b</code>的两部分，而此问题与原问题形式相同。</p>
+</li>
+<li><p>求逆算法</p>
+<p>对<code>a</code>求逆，对<code>b</code>求逆，再对整体求逆。示意图如下：</p>
+<div align="center"><br><img src="/assets/2/翻转算法.png" alt="翻转算法"><br></div>
+
+
+</li>
+</ol>
+<p>杂技算法的运行速度理论上是求逆算法的两倍，因为杂技算法对数组的每个元素仅存储和读取一次，而求逆算法需要两次。但在实际试验时出现了令我震惊的结论。</p>
+<p>习题答案中，作者在400MHz的Pentium机器上运行了杂技算法、求逆算法和快交换算法。运行时把n固定为1000000，并使旋转距离从1变化到50。下图绘制了在每个数据集上50次运行的平均时间：</p>
+<div align="center"><br><img src="/assets/2/效率图.png" alt="效率图"><br></div>
+
+<p>从图中我们可以得到以下结论：</p>
+<ol>
+<li>块交换算法（作为一个没有引起我注意的算法）在i&gt;2时，是这三个算法中最快的算法。</li>
+<li>杂技算法的单位开销是求逆算法的三倍以上，也就是说杂技算法的总体时间开销是求逆算法的1.5倍以上。（杂技算法比求逆算法要慢！）</li>
+</ol>
+<p>《编程珠玑》上说块交换算法有良好的高速缓存性能，而杂技算法的高速缓存性能差。但我不是很理解高速缓存的意思，网上也没有一个能让我看懂的解释。（这说明《CSAPP》还是厉害(￣▽￣)”）</p>
+<h2 id="2-高速缓存"><a href="#2-高速缓存" class="headerlink" title="2. 高速缓存"></a>2. 高速缓存</h2><p>高速缓存是一个小而快速的存储设备，它作为存储再更大、更慢的设备中的数据对象的缓冲区域。使用高速缓存的过程称为缓存。</p>
+<p>存储器层次结构是高速缓存的抽象。</p>
+<div align="center"><br><img src="/assets/2/存储器层次结构图.png" alt="存储器层次结构图"><br></div>
+
+<p>在存储器层次结构中，对于每个k，位于k层的更快更小的存储设备会作为位于k+1层的更大更慢的存储设备的缓存（也就是为其备份数据，让数据更快被读取）。</p>
+<div align="center"><br><img src="/assets/2/存储器层次结构中缓存原理图.png" alt="存储器层次结构中缓存原理图"><br></div>
+
+<p>上图展示了存储器层次结构中缓存的一般性概念。第k+1层的存储器被划分成连续的数据对象片，称为块。每个块都有一个唯一的地址（名字）使其区别于其他块。类似地。第k层的存储器也被划分成较小的块的集合，每个块的大小与k+1层的块大小相同。在任一时刻，第k层的缓存都包含第k+1层块的一个子集拷贝。数据总是以块的形式在第k层和第k+1层之间来回拷贝。</p>
+<p>虽然在层次结构中任何一对相邻的层次之间块大小是固定的，但其他层次对之间的块大小可以不同。一般而言，较低层的结构因访问速度慢更倾向于使用较大的块。</p>
+<p>由于存储器层次结构以块的方式进行缓存，为了适应这一结构，我们在实际编程中应该编写具有良好“局部性”的程序。</p>
+<p>局部性通常分为两种不同的形式：<em>时间局部性</em>和<em>空间局部性</em>。在具有良好的时间局部性程序中，被引用过一次的存储器位置很可能在不远的将来再被多次引用（即使用同一个变量）；在具有良好的空间局部性程序中，如果存储器位置被引用了一次，那么程序很可能在不远的将来引用附近的一个存储器的位置（即使用数组并低维度优先邻近引用）。</p>
+<pre><code class="c">int sum(int a[n][m])
+{
+  int sum = 0, i, j;
+  for (i = 0; i &lt; n; i++)
+    for (j = 0; i &lt; m; j++)
+      sum += a[i][j];
+  return sum;
+}
+</code></pre>
+<p>我们说变量sum使函数具有了良好的是时间局部性；数组通过行优先访问（步长为1）的引用模式使函数具有了良好的空间局部性。若循环变成下面这样：</p>
+<pre><code class="c">for (i = 0; i &lt; m; i++)
+    for (j = 0; j &lt; n; j++)
+      sum += a[j][i];
+</code></pre>
+<p>我们则说它不具备良好的空间局部性，因为数组通过列优先访问（步长为m）。</p>
+<h2 id="3-结论"><a href="#3-结论" class="headerlink" title="3. 结论"></a>3. 结论</h2><p>那么不难看出高速缓存性能好其实是在说“程序具有良好的局部性”。</p>
+<p>现在我们回过头看那三个算法：</p>
+<ul>
+<li>同：<ul>
+<li>三个算法的时间复杂度相同，都是O(n)。</li>
+</ul>
+</li>
+<li>异：<ul>
+<li>块交换算法是以局部性为基础思考的一个算法。虽然它的读写次数最多，但由于其高速缓存性能好，导致读写速度快，成为在i&gt;2时效率最高的算法。</li>
+<li>求逆算法由于求逆数据块较大，完整的缓存块理论上处于比块交换算法低的位置，所以读取效率比块交换稍慢。</li>
+<li>杂技算法的步长为2m，导致缓存命中率低（高速缓存性能差），读写速度慢，成为三个算法中效率最慢的算法。</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+</article>
+<blockquote class="top-gap-big"> <p> 本文遵循 <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh" class"text-muted">CC BY-ND-ND 3.0</a> 协议，转载请注明原作者，禁止商用，禁止演绎。 </p> </blockquote>
+<div class="top-gap-big text-center text-muted">
+  <small>
+    <i class="czs-tag-l"></i>
+    <a class="text-muted" href="/tags/编程珠玑/">编程珠玑</a>
+  </small>
+</div>
+
+
+  <div id="disqus_thread" class="top-gap-big"></div>
+  <script>
+    var langMap = {
+      en: 'en',
+      'zh-CN': 'zh'
+    };
+    var disqus_config = function () {
+      this.language = langMap['zh-CN'] || langMap['en'];
+      this.page.url = 'https://freder-chen.github.io/2017/12/03/3个旋转向量算法的比较/';
+      this.page.identifier = '2017/12/03/3个旋转向量算法的比较/';
+      this.page.title = '3个旋转向量算法的比较';
+    };
+    (function() {
+      var d = document, s = d.createElement('script');
+      s.src = '//Freder.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+        <hr class="top-gap-big"></hr>
+<p class="text-center">
+  <small class="text-muted">
+    &copy;
+    
+      2017 -
+    
+    <span itemprop="copyrightYear">2019</span>
+    <i class="czs-heart" style="color:red;"></i>
+    <span itemprop="copyrightHolder">Freder</span>
+
+    <br/>
+
+    由 <a class="text-muted" href="https://hexo.io" title="Hexo">Hexo</a> 强力驱动
+    <span class="theme-separator">·</span>
+    主题
+    <a class="text-muted" href="https://github.com/xcatliu/hexo-theme-milk">Milk</a>
+  </small>
+</p>
+
+      </div>
+      <div class="theme-sidebar-mask theme-hide"></div>
+<aside class="theme-sidebar-wrapper">
+  <div class="container flex-left units-gap theme-header-container">
+    
+    <a class="unit-0 theme-icon-link" href="/archives" title="归档">
+      <i class="czs-folder-l"></i>
+    </a>
+  
+    <a class="unit-0 theme-icon-link" href="/categories" title="分类">
+      <i class="czs-bookmark-l"></i>
+    </a>
+  
+    <a class="unit-0 theme-icon-link" href="/tags" title="标签">
+      <i class="czs-tag-l"></i>
+    </a>
+  
+    <div class="unit"></div>
+  
+    <a class="unit-0 theme-icon-link" href="https://freder-chen.github.io" title="关于我">
+      <i class="czs-user-l"></i>
+    </a>
+  
+
+  </div>
+  <div class="container">
+    
+          <h2>Freder的博客</h2>
+          
+          <p class="top-gap-0 text-muted">bibibi~bibi~bi~</p>
+          
+          <div class="flex-left flex-middle top-gap">
+            <img alt="Avatar" height="24" src="/assets/about/freder.jpg"/>
+            <span class="theme-sidebar-author">Freder</span>
+          </div>
+          
+          <p>Welcome to there!</p>
+          
+          <p class="theme-sidebar-social">
+            
+    <a class="unit-0 theme-icon-link" href="https://github.com/freder-chen" title="GitHub">
+      <i class="czs-github"></i>
+    </a>
+  
+    <a class="unit-0 theme-icon-link" href="/atom.xml" title="RSS 订阅">
+      <i class="czs-rss"></i>
+    </a>
+  
+
+          </p>
+          
+          <h5>友情链接</h5>
+          <p class="text-muted">
+            <small>
+              <ul class="theme-list-style-none">
+                <li><a class="text-muted" href="https://blog.crazyforcode.org/">CFC Studio</a></li><li><a class="text-muted" href="https://blog.windisco.com/">执一 こころ 🍥</a></li><li><a class="text-muted" href="/links">More</a></li>
+              </ul>
+            </small>
+          </p>
+          
+  </div>
+</aside>
+
+    </div>
+	
+    <script src="/js/theme.js"></script>
+    
+
+    
+  <script id="dsq-count-scr" src="//Freder.disqus.com/count.js" async></script>
+
+  </body>
+</html>

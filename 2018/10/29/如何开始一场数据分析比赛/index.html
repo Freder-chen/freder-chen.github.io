@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+	<script type="text/javascript" async
+		src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
+	</script>
+  </head>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+  
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/css/mobi.css-3.1.1/dist/mobi.min.css">
+<link rel="stylesheet" href="/css/caomei1.2.1/style.css">
+<link rel="stylesheet" href="/css/theme.css">
+
+  
+    <meta name="keywords" content="Data Analysis" />
+  
+
+  
+    <link rel="alternate" href="/atom.xml" title="Freder的博客" type="application/atom+xml" />
+  
+
+  
+    <link rel="shortcut icon" href="/favicon.jpg">
+  
+
+  <title>如何开始一场数据分析比赛 - Freder的博客</title>
+</head>
+
+  <body class="theme-body">
+    <div class="flex-center theme-header-wrapper">
+  <div class="container flex-left units-gap theme-header-container">
+    <a href="/" class="unit-0 theme-header-icon theme-icon-link" title="首页">
+      <i class="czs-home-l"></i>
+    </a>
+    <div class="flex-center text-center flex-middle unit theme-header-title theme-header-title-no-transition">
+      Freder的博客
+    </div>
+    <a class="unit-0 theme-header-icon theme-icon-link theme-header-sidebar-icon" href="javascript:void(0);" title="更多">
+      <i class="czs-menu-l"></i>
+    </a>
+  </div>
+</div>
+<div class="theme-header-placeholder"></div>
+
+    <div class="flex-center">
+      <div class="container">
+        <article>
+  <h1 class="text-center">
+    如何开始一场数据分析比赛
+  </h1>
+  <div class="text-center top-gap">
+    <div class="text-small text-muted">
+  <time datetime="2018-10-29T00:00:00+08:00">
+    2018-10-29
+  </time>
+  <span class="theme-separator">·</span>
+  <i class="czs-user-l"></i>
+  <a class="text-muted theme-text-no-decoration" href="https://github.com/Freder">Freder</a>
+  <span class="theme-separator">·</span>
+  <i class="czs-bookmark-l"></i>
+  <a class="text-muted theme-text-no-decoration" href="/categories/Code/">Code</a>
+  <span class="theme-comment-count-container theme-hide theme-comment-count-container-transparent">
+    <span class="theme-separator">·</span>
+    <i class="czs-comment-l"></i>
+    <a class="text-muted theme-text-no-decoration theme-comment-count" data-disqus-identifier="2018/10/29/如何开始一场数据分析比赛/" href="/2018/10/29/如何开始一场数据分析比赛/#disqus_thread"></a>
+  </span>
+</div>
+
+  </div>
+  <div class="top-gap-big">
+    <p>说来惭愧，这篇文章是比赛时就开始准备，拖到答辩后才完成。</p>
+<p>写这篇文章的缘由是开始做<a href="http://www.dcjingsai.com/common/cmpt/2018%E7%A7%91%E5%A4%A7%E8%AE%AF%E9%A3%9EAI%E8%90%A5%E9%94%80%E7%AE%97%E6%B3%95%E5%A4%A7%E8%B5%9B_%E7%AB%9E%E8%B5%9B%E4%BF%A1%E6%81%AF.html" target="_blank" rel="external">2018科大讯飞AI营销算法大赛</a>， 被好友问到如何入门数据分析，由于我自己算是零基础边比赛边学，一时间不知道如何回答。毕竟“输的时候说什么都是错的”。最后取得第四名的成绩外出答辩受宠若惊，也给了我一点底气聊一聊自己的想法。同时，我必须强调这次比赛多亏了各位大佬的Baseline，否则不可能获得如此成绩。秉承继承分享精神的心情写下一点拙见。</p>
+<p>由于我所属的队伍对于特征并无过多交流，以至于最后答辩的时候出现了不知道对方做了什么的尴尬情况。所以这里只能谈谈我自己的一点思路。大多观点借鉴这篇<a href="https://zhuanlan.zhihu.com/p/27033340" target="_blank" rel="external">转载文章</a>。</p>
+<h3 id="开头的胡言乱语"><a href="#开头的胡言乱语" class="headerlink" title="开头的胡言乱语"></a>开头的胡言乱语</h3><p>我一直认为实战是最好的入门材料，数据分析亦如此。所以不要害怕面对比赛一行代码都敲不出来。一般情况下会有 baseline 作为参考，照着 baseline 一行一行敲，查每一个函数的意思、用法，慢慢的学会怎么使用数据分析工具。然后再去考虑研究每一个函数内部的原理。</p>
+<h3 id="先让程序跑起来"><a href="#先让程序跑起来" class="headerlink" title="先让程序跑起来"></a>先让程序跑起来</h3><p>我们可以借鉴 <a href="https://zhuanlan.zhihu.com/p/44956113" target="_blank" rel="external">baseline</a> 中的模型，将所有应该导入的包装好以后以最快的速度跑出一个答案。</p>
+<p>数据分析的一般步骤是读数据、填充缺失值、提取特征、模型的训练及预测。但要以最快的速度将模型跑起来就将所有 object 类型的特征 drop 掉。不要考虑提取特征。</p>
+<p>我们可以通过 <code>dtypes</code> 查看一个DataFrame 里面的数据类型，通过 <code>isnull</code> 查看 DataFrame 里数据为空的情况。</p>
+<pre><code class="python">import os
+import pandas as pd
+test = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;round1_iflyad_test_feature.txt&#39;), sep=&#39;\t&#39;)
+print(test.dtypes)
+NAs = test.isnull().sum()
+print(NAs[NAs &gt; 0])
+</code></pre>
+<p>运行以后我们可以看到：</p>
+<pre><code class="shell">instance_id                int64
+time                       int64
+...(太长省略)
+app_paid                    bool
+advert_name               object
+dtype: object
+
+user_tags      13232
+make            4126
+...(太长省略)
+f_channel      36637
+app_id            31
+dtype: int64
+</code></pre>
+<p>有这个结果我们就能知道哪些是我们应该删除的特征（比如 <code>advert_name</code>），哪些是我们应该填充的缺失值。现在就可以进行数据预处理：</p>
+<pre><code class="python">import os
+import pandas as pd
+
+def show_NaN(df):
+    NAs = df.isnull().sum()
+    print(NAs[NAs &gt; 0])
+
+def fill_missings(df):
+    df[&#39;make&#39;] = df[&#39;make&#39;].fillna(&#39;-1&#39;)
+    df[&#39;model&#39;] = df[&#39;model&#39;].fillna(&#39;-1&#39;)
+    df[&#39;osv&#39;] = df[&#39;osv&#39;].fillna(&#39;-1&#39;)
+    df[&#39;app_cate_id&#39;] = df[&#39;app_cate_id&#39;].fillna(-1)
+    df[&#39;app_id&#39;] = df[&#39;app_id&#39;].fillna(-1)
+    df[&#39;click&#39;] = df[&#39;click&#39;].fillna(-1)
+    df[&#39;user_tags&#39;] = df[&#39;user_tags&#39;].fillna(&#39;-1&#39;)
+    df[&#39;f_channel&#39;] = df[&#39;f_channel&#39;].fillna(&#39;-1&#39;)
+    return df
+
+print(&#39;Begin to read database...&#39;)
+train = pd.read_csv(os.path.join(&#39;Data&#39;,&#39;round1_iflyad_train.txt&#39;), sep=&#39;\t&#39;)
+test = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;round1_iflyad_test_feature.txt&#39;), sep=&#39;\t&#39;)
+all_data = pd.concat([train, test], sort=False)
+
+print(&#39;Begin to do pretreatment...&#39;)
+all_data = fill_missings(all_data)
+numeric_feats = all_data.dtypes[all_data.dtypes == &#39;object&#39;].index
+all_data = all_data.drop(numeric_feats, axis=1)
+
+print(&#39;Begin to save database...&#39;)
+print(all_data.dtypes)
+print(all_data.shape)
+show_NaN(all_data)
+all_data[:train.shape[0]].to_csv(os.path.join(&#39;Data&#39;, &#39;train.csv&#39;), index=False)
+all_data[train.shape[0]:].to_csv(os.path.join(&#39;Data&#39;, &#39;test.csv&#39;), index=False)
+</code></pre>
+<p><em>PS：我将所有数据文件放入了当前路径的 Data 文件夹中，你可以适应自己的文件路径。</em></p>
+<p>选择模型这方面我也知之甚少，是以后应该重点补足的点。但开始一个比赛模型复制 <a href="https://zhuanlan.zhihu.com/p/44956113" target="_blank" rel="external">baseline</a> ，大方向不会错。</p>
+<pre><code class="python">import os
+import time
+import datetime
+
+import numpy as np
+import pandas as pd
+
+import warnings
+warnings.filterwarnings(&#39;ignore&#39;)
+
+def lgb_train(X_train, X_test, y):
+    import lightgbm as lgb
+    from sklearn.cross_validation import StratifiedKFold
+
+    X_loc_train = X_train.values
+    y_loc_train = y.values
+    X_loc_test = X_test.values
+    res = X_test.loc[:, [&#39;instance_id&#39;]]
+
+    model = lgb.LGBMClassifier(
+        boosting_type=&#39;gbdt&#39;, num_leaves=48, max_depth=-1, learning_rate=0.05,
+        n_estimators=2000, max_bin=425, subsample_for_bin=50000, objective=&#39;binary&#39;,
+        min_split_gain=0,min_child_weight=5, min_child_samples=10, subsample=0.8,
+        subsample_freq=1, colsample_bytree=1, reg_alpha=3, reg_lambda=5, seed=1000, 
+        n_jobs=10, silent=True)
+
+    # 五折交叉训练，构造五个模型
+    baseloss = []
+    for i, (train_index, test_index) in enumerate(list( \
+        StratifiedKFold(y_loc_train, n_folds=5, shuffle=True, random_state=1024))):
+        print(&#39;---Fold&#39;, i)
+        lgb_model = model.fit(
+            X_loc_train[train_index], y_loc_train[train_index],
+            eval_names =[&#39;train&#39;, &#39;valid&#39;],
+            eval_metric=&#39;logloss&#39;,
+            eval_set=[
+                (X_loc_train[train_index], y_loc_train[train_index]),
+                (X_loc_train[test_index], y_loc_train[test_index])
+            ],
+            early_stopping_rounds=100
+        )
+        baseloss.append(lgb_model.best_score_[&#39;valid&#39;][&#39;binary_logloss&#39;])
+        res[&#39;prob_%s&#39; % str(i)] = lgb_model.predict_proba(
+            X_loc_test, num_iteration=lgb_model.best_iteration_)[:, 1]
+        print(&#39;mean:&#39;, res[&#39;prob_%s&#39; % str(i)].mean())
+
+    res[&#39;predicted_score&#39;] = res[[&#39;prob_&#39; + str(i) for i in range(5)]].mean(axis=1)
+    print(&#39;logloss:&#39;, baseloss, np.mean(baseloss))
+    print(&#39;mean:&#39;, res[&#39;predicted_score&#39;].mean())
+    now = datetime.datetime.now().strftime(&#39;%m-%d-%H-%M&#39;)
+    res[[&#39;instance_id&#39;, &#39;predicted_score&#39;]].to_csv(
+        os.path.join(&#39;Submit&#39;, &#39;lgb_%s.csv&#39; % now), index=False)
+
+
+print(&#39;Begin to read csv...&#39;)
+train = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;train.csv&#39;))
+test = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;test.csv&#39;))
+all_data = pd.concat([train, test], sort=False)
+
+print(&#39;Begin to plot database...&#39;)
+X_train = all_data[:train.shape[0]].drop([&#39;click&#39;], axis=1)
+X_test = all_data[train.shape[0]:].drop([&#39;click&#39;], axis=1)
+y = train[&#39;click&#39;]
+
+print(&#39;Begin to train...&#39;)
+lgb_train(X_train, X_test, y)
+</code></pre>
+<p>至于什么是LightGB、什么是N折交叉训练，以后再去弄明白。这样算是能跑出一个结果了。</p>
+<h3 id="提取特征"><a href="#提取特征" class="headerlink" title="提取特征"></a>提取特征</h3><p>在有一个能跑通的模型基础上，我肤浅的谈谈特征工程。</p>
+<p>首先我们看看每个特征里面有多少类值：</p>
+<pre><code class="python">df = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;round1_iflyad_train.txt&#39;), sep = &#39;\t&#39;)
+print(df.nunique().sort_values())
+</code></pre>
+<pre><code class="shell">app_paid                       1
+creative_is_voicead            1
+...
+nnt                            6
+creative_height               13
+creative_width                20
+app_cate_id                   22
+advert_industry_inner         24
+advert_name                   34
+province                      35
+advert_id                     38
+creative_tp_dnf               40
+campaign_id                   64
+f_channel                     73
+osv                          300
+city                         333
+...
+instance_id              1001650
+dtype: int64
+</code></pre>
+<p>像<code>creative_is_voicead</code>、<code>creative_is_js</code>类别为1的项就可以直接剔除掉；类似于<code>creative_has_deeplink</code>这样的二值特征直接使用问题不会太大；而<code>creative_width</code>这样的特征直接传入也是可以的。</p>
+<p>仔细观察就会发现这些特征里面全是ID类离散特征。常理来说，ID类特征是不能直接导入模型的，这样的特征要么<a href="https://en.wikipedia.org/wiki/One-hot" target="_blank" rel="external">One-Hot</a>、要么对其进行排序。我的特征都是围绕这两项展开。One-Hot比较简单而且易于理解，代表着当前类别对Label的影响，这里不过多叙述。</p>
+<p>重点说说对ID排序。排序是希望不规则的ID与Label呈线性关系(即ID越大点击率越高之类)，那么就这个问题来说广告点击率（CTR）是最为直接的排序方式。首先我们就可以对不同特征的CTR进行一些测验，比如考虑不同类型的广告点击率不同：</p>
+<pre><code class="python">import matplotlib.pyplot as plt
+df = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;round1_iflyad_train.txt&#39;), sep = &#39;\t&#39;)
+res = df.groupby([&#39;creative_type&#39;])[&#39;click&#39;].mean().reset_index(name=&#39;creative_type_ctr&#39;)
+print(res)
+x, y = &#39;creative_type&#39;, &#39;creative_type_ctr&#39;
+data = pd.concat([res[x], res[y]], axis=1)
+data.plot.scatter(x=x, y=y, ylim=(0, 1))
+plt.show()
+</code></pre>
+<div align="center"><br><img src="/assets/xunfei/creative_type_ctr.png" alt="image-20181008152344990"><br></div>
+
+<p>我们可以看到编号为类型2、3、5的广告点击率明显不如类型8、10的广告。那么我们可以这样写：</p>
+<pre><code class="python">df = df.replace({
+    &quot;creative_type&quot; : {2 : 1, 5 : 2, 3 : 3, 10 : 4, 8 : 5},
+})
+</code></pre>
+<p>这样广告类型和Label就正相关了。我们还可以猜测用户的网络状态（nnt）也与点击广告有关等等。</p>
+<p>像这样简单的给ID排序会有一定的效果，但是可能仍不尽理想。因为不同的人会喜欢不同的广告类型，比如化妆品类广告可能点击率很高，但是如果推送给不化妆的人点击率会大大降低。也就是说同一类型的广告对不同的人来说点击率是不同的：</p>
+<pre><code class="python">df = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;round1_iflyad_train.txt&#39;), sep = &#39;\t&#39;)
+
+df[&#39;creative_type_nnt&#39;] = df[&#39;creative_type&#39;].astype(&#39;str&#39;).str.cat(
+    df[&#39;nnt&#39;].astype(&#39;str&#39;), sep=&#39;_&#39;)
+df[&#39;creative_type_nnt&#39;] = df[&#39;creative_type_nnt&#39;].map(dict(
+    zip(df[&#39;creative_type_nnt&#39;].unique(), range(0, df[&#39;creative_type_nnt&#39;].nunique()))
+)).astype(&#39;int32&#39;)
+res = df.groupby([&#39;creative_type_nnt&#39;])[&#39;click&#39;].mean().reset_index(
+    name=&#39;creative_type_nnt_ctr&#39;)
+print(res)
+
+x, y = &#39;creative_type_nnt&#39;, &#39;creative_type_nnt_ctr&#39;
+data = pd.concat([res[x], res[y]], axis=1)
+data.plot.scatter(x=x, y=y, ylim=(0, 1))
+plt.show()
+</code></pre>
+<p>那么将<code>creative_type</code>和<code>nnt</code>拼接起来并重新编号ID（利于输出），得到下图：</p>
+<div align="center"><br><img src="/assets/xunfei/creative_type_nnt1.png" alt="image-20181012222022389"><br></div>
+
+<p>我们可以看到相比于之前的<code>creative_type</code>，现在每个ID的区分度更大，但是好像开始无法分辨<code>creative_type</code>之间的关系了。这是因为一维只能描述一种排序关系，要想实现特征拼接而尽量不丢失原始信息就应该使用One-Hot转化为多维来表示不同的<code>creative_type</code>，类似于下面实现：</p>
+<pre><code class="python">df = pd.read_csv(os.path.join(&#39;Data&#39;, &#39;round1_iflyad_train.txt&#39;), sep = &#39;\t&#39;)
+res = df.groupby([&#39;creative_type&#39;, &#39;nnt&#39;])[&#39;click&#39;].mean().reset_index(
+    name=&#39;creative_type_nnt_ctr&#39;)
+print(res)
+
+x, y = &#39;nnt&#39;, &#39;creative_type_nnt_ctr&#39;
+data = pd.concat([res[x], res[y]], axis=1)
+data.plot.scatter(x=x, y=y, ylim=(0, 1))
+plt.show()
+</code></pre>
+<p>通过下图就可以看出在<code>creative_type</code>相同时，<code>nnt</code>不同CTR不同。这就可以表示不同<code>nnt</code>在同一<code>creative_type</code>下的偏好：</p>
+<p><img src="/assets/xunfei/creative_type_nnt_ctr.png" alt="image-20181012220853867"></p>
+<p>通过上图又出现了一个问题，就是在<code>creative_type</code>为10的时候有一个点的ctr值为1。我们查看这个点的实际信息可以看到：</p>
+<pre><code class="shell">creative_type   nnt        ctr     count
+           10     2   1.000000         1
+</code></pre>
+<p><code>creative_type=10 &amp; nnt=2</code>情况的点击率为1，但是只发生了1次。很明显这个点击率不可信，这时就要用到平滑处理，去尝试预测真实的点击率。</p>
+<p>在一行数据在某一特征下出现次数可能很少（比如<code>model</code>），但是在另一些特征下出现次数会相对较多（如<code>nnt</code>）。我们说出现次数少的特征可信度低，出现次数多的特征可信度高。用可信度高的特征去预测可信度低的特征的点击率也许可行：</p>
+<pre><code class="python">def get_ctr_matrix(data, src, dest):
+    temp = data.loc[data[&#39;label&#39;] != -1, [src, dest, &#39;label&#39;]]
+
+    src_gb = temp.groupby([src])
+    src_frame = src_gb.agg({&#39;label&#39;: &#39;sum&#39;}).rename(
+        columns={&#39;label&#39;: &#39;src_sum&#39;}).join(
+        src_gb.agg({&#39;label&#39;: &#39;count&#39;}).rename(
+        columns={&#39;label&#39;: &#39;src_count&#39;})).reset_index()
+    del src_gb
+
+    dest_gb = temp.groupby([src, dest])
+    dest_frame = dest_gb.agg({&#39;label&#39;: &#39;sum&#39;}).rename(
+        columns={&#39;label&#39;: &#39;dest_sum&#39;}).join(
+        dest_gb.agg({&#39;label&#39;: &#39;count&#39;}).rename(
+        columns={&#39;label&#39;: &#39;dest_count&#39;})).reset_index()
+    del dest_gb
+
+    frame = pd.merge(src_frame, dest_frame, on=[src], how=&#39;right&#39;)
+    del temp, src_frame, dest_frame
+
+    frame[&#39;rate&#39;] = (frame[&#39;src_sum&#39;] + frame[&#39;dest_sum&#39;]) / (frame[&#39;src_count&#39;] + frame[&#39;dest_count&#39;])
+    frame.drop([&#39;src_sum&#39;, &#39;src_count&#39;, &#39;dest_sum&#39;, &#39;dest_count&#39;], axis=1, inplace=True)
+    data = pd.merge(data, frame, on=[src, dest], how=&#39;left&#39;).fillna(0)
+    del frame
+
+    src_hot = pd.get_dummies(data[src], dtype=&#39;float32&#39;)
+    for h in src_hot.columns:
+        src_hot[h] *= data[&#39;rate&#39;]
+    data.drop([&#39;rate&#39;], axis=1, inplace=True)
+
+    return sparse.csr_matrix(src_hot[data[&#39;label&#39;] != -1], dtype=&#39;float32&#39;), sparse.csr_matrix(src_hot[data[&#39;label&#39;] == -1], dtype=&#39;float32&#39;)
+
+
+ctr_list = [
+    (&#39;creative_width&#39;, &#39;app_id&#39;),
+    (&#39;nnt&#39;, &#39;creative_id&#39;),
+]
+
+ctr_train_csr = sparse.csr_matrix((len(train_x), 0))
+ctr_predict_csr = sparse.csr_matrix((len(predict), 0))
+for (src, dest) in ctr_list:
+    ctr_t, ctr_p = get_ctr_matrix(data, src, dest)
+    ctr_train_csr = sparse.hstack((ctr_train_csr, ctr_t), &#39;csr&#39;, &#39;float32&#39;)
+    ctr_predict_csr = sparse.hstack((ctr_predict_csr, ctr_p), &#39;csr&#39;, &#39;float32&#39;)
+    print(src, dest, &#39;over&#39;)
+print(&#39;ctr feature prepared !&#39;)
+</code></pre>
+<p>PS：本来由于维数过大，笔记本8G内存不够用，差点在这里弃赛。后来林有夕开源救我一命，用到了CSR。</p>
+<p>在此之后出现了一个新的问题：若一个可信度高的类别转化率与可信度低的猜测转化率是相同的，可重要性应该不一样。当前特征没有体现这个区别。最后通过加入每个类别数量在全集中的占比来反映一个广告推送的置信度。解决了同一转化率下，不同类别可信度不同的问题。</p>
+<p>最后，也是我没有完成的问题：如何解决针对用户点击率计算的多样化。当前投放特征主要集中在广告方和APP方，计算不同类人的偏好应该能优化这种情况。</p>
+<h3 id="思考与总结"><a href="#思考与总结" class="headerlink" title="思考与总结"></a>思考与总结</h3><ol>
+<li>无论是比赛过程中还是比赛结束后，深切体会到自己理论知识的缺乏。</li>
+<li>离散特征做连续化是主要思路。</li>
+<li>缺失值可以填充mean，填充新类别，也可以用其他特征预测。</li>
+<li>Baseline有时候是个好东西，有时候会被骗。</li>
+<li>肝真的能弥补一些东西，但不是全部。</li>
+</ol>
+<h3 id="有趣的链接"><a href="#有趣的链接" class="headerlink" title="有趣的链接"></a>有趣的链接</h3><ul>
+<li><a href="http://www.dcjingsai.com/common/cmpt/2018%E7%A7%91%E5%A4%A7%E8%AE%AF%E9%A3%9EAI%E8%90%A5%E9%94%80%E7%AE%97%E6%B3%95%E5%A4%A7%E8%B5%9B_%E7%AB%9E%E8%B5%9B%E4%BF%A1%E6%81%AF.html" target="_blank" rel="external">2018科大讯飞AI营销算法大赛</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/27033340" target="_blank" rel="external">转载文章</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/44956113" target="_blank" rel="external">baseline</a></li>
+</ul>
+
+  </div>
+</article>
+<blockquote class="top-gap-big"> <p> 本文遵循 <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh" class"text-muted">CC BY-ND-ND 3.0</a> 协议，转载请注明原作者，禁止商用，禁止演绎。 </p> </blockquote>
+<div class="top-gap-big text-center text-muted">
+  <small>
+    <i class="czs-tag-l"></i>
+    <a class="text-muted" href="/tags/Data-Analysis/">Data Analysis</a>
+  </small>
+</div>
+
+
+  <div id="disqus_thread" class="top-gap-big"></div>
+  <script>
+    var langMap = {
+      en: 'en',
+      'zh-CN': 'zh'
+    };
+    var disqus_config = function () {
+      this.language = langMap['zh-CN'] || langMap['en'];
+      this.page.url = 'https://freder-chen.github.io/2018/10/29/如何开始一场数据分析比赛/';
+      this.page.identifier = '2018/10/29/如何开始一场数据分析比赛/';
+      this.page.title = '如何开始一场数据分析比赛';
+    };
+    (function() {
+      var d = document, s = d.createElement('script');
+      s.src = '//Freder.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+        <hr class="top-gap-big"></hr>
+<p class="text-center">
+  <small class="text-muted">
+    &copy;
+    
+      2017 -
+    
+    <span itemprop="copyrightYear">2019</span>
+    <i class="czs-heart" style="color:red;"></i>
+    <span itemprop="copyrightHolder">Freder</span>
+
+    <br/>
+
+    由 <a class="text-muted" href="https://hexo.io" title="Hexo">Hexo</a> 强力驱动
+    <span class="theme-separator">·</span>
+    主题
+    <a class="text-muted" href="https://github.com/xcatliu/hexo-theme-milk">Milk</a>
+  </small>
+</p>
+
+      </div>
+      <div class="theme-sidebar-mask theme-hide"></div>
+<aside class="theme-sidebar-wrapper">
+  <div class="container flex-left units-gap theme-header-container">
+    
+    <a class="unit-0 theme-icon-link" href="/archives" title="归档">
+      <i class="czs-folder-l"></i>
+    </a>
+  
+    <a class="unit-0 theme-icon-link" href="/categories" title="分类">
+      <i class="czs-bookmark-l"></i>
+    </a>
+  
+    <a class="unit-0 theme-icon-link" href="/tags" title="标签">
+      <i class="czs-tag-l"></i>
+    </a>
+  
+    <div class="unit"></div>
+  
+    <a class="unit-0 theme-icon-link" href="https://freder-chen.github.io" title="关于我">
+      <i class="czs-user-l"></i>
+    </a>
+  
+
+  </div>
+  <div class="container">
+    
+          <h2>Freder的博客</h2>
+          
+          <p class="top-gap-0 text-muted">bibibi~bibi~bi~</p>
+          
+          <div class="flex-left flex-middle top-gap">
+            <img alt="Avatar" height="24" src="/assets/about/freder.jpg"/>
+            <span class="theme-sidebar-author">Freder</span>
+          </div>
+          
+          <p>Welcome to there!</p>
+          
+          <p class="theme-sidebar-social">
+            
+    <a class="unit-0 theme-icon-link" href="https://github.com/freder-chen" title="GitHub">
+      <i class="czs-github"></i>
+    </a>
+  
+    <a class="unit-0 theme-icon-link" href="/atom.xml" title="RSS 订阅">
+      <i class="czs-rss"></i>
+    </a>
+  
+
+          </p>
+          
+          <h5>友情链接</h5>
+          <p class="text-muted">
+            <small>
+              <ul class="theme-list-style-none">
+                <li><a class="text-muted" href="https://blog.crazyforcode.org/">CFC Studio</a></li><li><a class="text-muted" href="https://blog.windisco.com/">执一 こころ 🍥</a></li><li><a class="text-muted" href="/links">More</a></li>
+              </ul>
+            </small>
+          </p>
+          
+  </div>
+</aside>
+
+    </div>
+	
+    <script src="/js/theme.js"></script>
+    
+
+    
+  <script id="dsq-count-scr" src="//Freder.disqus.com/count.js" async></script>
+
+  </body>
+</html>

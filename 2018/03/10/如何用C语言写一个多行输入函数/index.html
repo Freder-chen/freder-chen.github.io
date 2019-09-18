@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+	<script type="text/javascript" async
+		src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
+	</script>
+  </head>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+  
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+
+  
+  
+  
+
+  <link rel="stylesheet" href="/css/mobi.css-3.1.1/dist/mobi.min.css">
+<link rel="stylesheet" href="/css/caomei1.2.1/style.css">
+<link rel="stylesheet" href="/css/theme.css">
+
+  
+    <meta name="keywords" content="Gizmos" />
+  
+
+  
+    <link rel="alternate" href="/atom.xml" title="Freder的博客" type="application/atom+xml" />
+  
+
+  
+    <link rel="shortcut icon" href="/favicon.jpg">
+  
+
+  <title>如何用C语言写一个多行输入函数 - Freder的博客</title>
+</head>
+
+  <body class="theme-body">
+    <div class="flex-center theme-header-wrapper">
+  <div class="container flex-left units-gap theme-header-container">
+    <a href="/" class="unit-0 theme-header-icon theme-icon-link" title="首页">
+      <i class="czs-home-l"></i>
+    </a>
+    <div class="flex-center text-center flex-middle unit theme-header-title theme-header-title-no-transition">
+      Freder的博客
+    </div>
+    <a class="unit-0 theme-header-icon theme-icon-link theme-header-sidebar-icon" href="javascript:void(0);" title="更多">
+      <i class="czs-menu-l"></i>
+    </a>
+  </div>
+</div>
+<div class="theme-header-placeholder"></div>
+
+    <div class="flex-center">
+      <div class="container">
+        <article>
+  <h1 class="text-center">
+    如何用C语言写一个多行输入函数
+  </h1>
+  <div class="text-center top-gap">
+    <div class="text-small text-muted">
+  <time datetime="2018-03-10T00:00:00+08:00">
+    2018-03-10
+  </time>
+  <span class="theme-separator">·</span>
+  <i class="czs-user-l"></i>
+  <a class="text-muted theme-text-no-decoration" href="https://github.com/Freder">Freder</a>
+  <span class="theme-separator">·</span>
+  <i class="czs-bookmark-l"></i>
+  <a class="text-muted theme-text-no-decoration" href="/categories/Code/">Code</a>
+  <span class="theme-comment-count-container theme-hide theme-comment-count-container-transparent">
+    <span class="theme-separator">·</span>
+    <i class="czs-comment-l"></i>
+    <a class="text-muted theme-text-no-decoration theme-comment-count" data-disqus-identifier="2018/03/10/如何用C语言写一个多行输入函数/" href="/2018/03/10/如何用C语言写一个多行输入函数/#disqus_thread"></a>
+  </span>
+</div>
+
+  </div>
+  <div class="top-gap-big">
+    <blockquote>
+<p>从高中毕业就开始研究Editor，想写一个自己的文本编辑器。<br>大一时不了解其他东西就想用控制台写一个，留下了这么一个不完备的多行输入函数。</p>
+</blockquote>
+<h2 id="1-准备"><a href="#1-准备" class="headerlink" title="1. 准备"></a>1. 准备</h2><p>在尝试实现这个函数的过程中，我试过<code>printf()</code>系列，也试过<code>getchar()</code>系列，还有<code>getch()</code>系列……后来发现回车入栈函数并不能满足多行文本输入的需求，最后找到了<code>_getch()</code>与<code>_putch()</code>。由于<code>char</code>类型不能容纳中文（2个字节），选择了<code>wchar_t</code>作为储存字符的类型，与之相匹配的函数是<code>void _putwch(wchar_t c)</code>与<code>wchar_t _getwch()</code>。</p>
+<p>现在可以很容易实现输入一个字符并输出：</p>
+<pre><code class="c">wchar_t ch = _getwch();
+_putwch(ch);
+</code></pre>
+<h2 id="2-架构"><a href="#2-架构" class="headerlink" title="2. 架构"></a>2. 架构</h2><h3 id="2-1-基本数据结构"><a href="#2-1-基本数据结构" class="headerlink" title="2.1. 基本数据结构"></a>2.1. 基本数据结构</h3><ul>
+<li><p>Edit box config</p>
+<pre><code class="c">struct EditBoxConfig {
+    char *filename;
+    short cursor_x, cursor_y;
+    short screen_rows, screen_cols;
+    struct Word *head_word;
+    // Head_word has no characters(WEOF) which follows by the text.
+};
+</code></pre>
+</li>
+<li><p>Word</p>
+<p>我使用了双向链表来储存输入字符，但也可以尝试<code>char *</code>这样的数组配合<code>malloc</code>和<code>realloc</code>来写，理论上是更好的选择。</p>
+<pre><code class="c">struct Word {
+    wchar_t ch;
+    struct Word *last;
+    struct Word *next;
+};
+</code></pre>
+</li>
+</ul>
+<h3 id="2-2-输入"><a href="#2-2-输入" class="headerlink" title="2.2. 输入"></a>2.2. 输入</h3><ul>
+<li><p>输入函数需要正确处理输入的内容：</p>
+<pre><code class="c">wchar_t ch;
+switch (ch = _getwch()) {
+    // You can find the number of these characters on the Internet.
+    case ARROW_KEY:
+        move_pointer(_getwch());
+        break;
+    case BACKSPACE:
+        delete_word();
+        break;
+    case ...:
+        /* You can do what you want.*/
+        break; 
+    default: /* Word and enter. */
+        insert_word(ch);
+        break;
+}
+</code></pre>
+</li>
+</ul>
+<ul>
+<li>在输入过程中需要定义一个<code>present_word</code>在储存当前指向的字符。我们可以将它看作虚拟光标。</li>
+</ul>
+<h3 id="2-3-输出"><a href="#2-3-输出" class="headerlink" title="2.3. 输出"></a>2.3. 输出</h3><ul>
+<li><p>输出需要在正确的位置渲染出字符：</p>
+<pre><code class="c">// This is print word head.
+// If the text is beyond the screen, 
+// it will not be the head of text.
+struct Word *word = word_head;
+
+// Print line by line.
+for (i = 0; i &lt; editor.screen_rows - 1; i++) {
+    // If current Word is a word, print it on screen.
+    // Else if current Word is newline character, print space after this position.
+    print_word_and_update_cursor();
+}
+
+move_cursor_to(editor.cursor_x, editor.cursor_y);
+</code></pre>
+</li>
+</ul>
+<h3 id="2-4-输入、输出函数联系"><a href="#2-4-输入、输出函数联系" class="headerlink" title="2.4. 输入、输出函数联系"></a>2.4. 输入、输出函数联系</h3><ul>
+<li><pre><code class="c">while (1) {
+    refresh_screen();
+    process_keypress();
+}
+</code></pre>
+</li>
+</ul>
+<h2 id="3-想说的话-吐槽-。"><a href="#3-想说的话-吐槽-。" class="headerlink" title="3. 想说的话(吐槽=。="></a>3. 想说的话<del>(吐槽</del>=。=</h2><p>从开始这个项目到现在很久很久了，最主要的问题是我很少找到可以借鉴的资料，导致战线超级长。这也从另一方面反映这东西的奇葩(=。=)</p>
+<p>从一开始的想写一个自己的文本编辑器，到和编辑框杠上，有很多可以回忆的往事。所以虽然这东西简单，但我很想记录下来，它对我来说是非常重要的回忆。记得几次寒假一两周不出门，每天十几小时花在上面都是辛酸泪。</p>
+<p>另外，我的Demo还有很多功能没有实现。比如：翻页、一些常用键功能……短期内不会再弄这东西了。</p>
+<h2 id="4-参考资料"><a href="#4-参考资料" class="headerlink" title="4. 参考资料"></a>4. 参考资料</h2><ol>
+<li><a href="https://github.com/Freder-chen/edit_box" target="_blank" rel="external">My demo in github</a></li>
+<li><a href="http://antirez.com/news/108" target="_blank" rel="external">Kilo</a></li>
+<li><a href="https://viewsourcecode.org/snaptoken/kilo/" target="_blank" rel="external">Kilo解析</a></li>
+</ol>
+
+  </div>
+</article>
+<blockquote class="top-gap-big"> <p> 本文遵循 <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh" class"text-muted">CC BY-ND-ND 3.0</a> 协议，转载请注明原作者，禁止商用，禁止演绎。 </p> </blockquote>
+<div class="top-gap-big text-center text-muted">
+  <small>
+    <i class="czs-tag-l"></i>
+    <a class="text-muted" href="/tags/Gizmos/">Gizmos</a>
+  </small>
+</div>
+
+
+  <div id="disqus_thread" class="top-gap-big"></div>
+  <script>
+    var langMap = {
+      en: 'en',
+      'zh-CN': 'zh'
+    };
+    var disqus_config = function () {
+      this.language = langMap['zh-CN'] || langMap['en'];
+      this.page.url = 'https://freder-chen.github.io/2018/03/10/如何用C语言写一个多行输入函数/';
+      this.page.identifier = '2018/03/10/如何用C语言写一个多行输入函数/';
+      this.page.title = '如何用C语言写一个多行输入函数';
+    };
+    (function() {
+      var d = document, s = d.createElement('script');
+      s.src = '//Freder.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+        <hr class="top-gap-big"></hr>
+<p class="text-center">
+  <small class="text-muted">
+    &copy;
+    
+      2017 -
+    
+    <span itemprop="copyrightYear">2019</span>
+    <i class="czs-heart" style="color:red;"></i>
+    <span itemprop="copyrightHolder">Freder</span>
+
+    <br/>
+
+    由 <a class="text-muted" href="https://hexo.io" title="Hexo">Hexo</a> 强力驱动
+    <span class="theme-separator">·</span>
+    主题
+    <a class="text-muted" href="https://github.com/xcatliu/hexo-theme-milk">Milk</a>
+  </small>
+</p>
+
+      </div>
+      <div class="theme-sidebar-mask theme-hide"></div>
+<aside class="theme-sidebar-wrapper">
+  <div class="container flex-left units-gap theme-header-container">
+    
+    <a class="unit-0 theme-icon-link" href="/archives" title="归档">
+      <i class="czs-folder-l"></i>
+    </a>
+  
+    <a class="unit-0 theme-icon-link" href="/categories" title="分类">
+      <i class="czs-bookmark-l"></i>
+    </a>
+  
+    <a class="unit-0 theme-icon-link" href="/tags" title="标签">
+      <i class="czs-tag-l"></i>
+    </a>
+  
+    <div class="unit"></div>
+  
+    <a class="unit-0 theme-icon-link" href="https://freder-chen.github.io" title="关于我">
+      <i class="czs-user-l"></i>
+    </a>
+  
+
+  </div>
+  <div class="container">
+    
+          <h2>Freder的博客</h2>
+          
+          <p class="top-gap-0 text-muted">bibibi~bibi~bi~</p>
+          
+          <div class="flex-left flex-middle top-gap">
+            <img alt="Avatar" height="24" src="/assets/about/freder.jpg"/>
+            <span class="theme-sidebar-author">Freder</span>
+          </div>
+          
+          <p>Welcome to there!</p>
+          
+          <p class="theme-sidebar-social">
+            
+    <a class="unit-0 theme-icon-link" href="https://github.com/freder-chen" title="GitHub">
+      <i class="czs-github"></i>
+    </a>
+  
+    <a class="unit-0 theme-icon-link" href="/atom.xml" title="RSS 订阅">
+      <i class="czs-rss"></i>
+    </a>
+  
+
+          </p>
+          
+          <h5>友情链接</h5>
+          <p class="text-muted">
+            <small>
+              <ul class="theme-list-style-none">
+                <li><a class="text-muted" href="https://blog.crazyforcode.org/">CFC Studio</a></li><li><a class="text-muted" href="https://blog.windisco.com/">执一 こころ 🍥</a></li><li><a class="text-muted" href="/links">More</a></li>
+              </ul>
+            </small>
+          </p>
+          
+  </div>
+</aside>
+
+    </div>
+	
+    <script src="/js/theme.js"></script>
+    
+
+    
+  <script id="dsq-count-scr" src="//Freder.disqus.com/count.js" async></script>
+
+  </body>
+</html>
